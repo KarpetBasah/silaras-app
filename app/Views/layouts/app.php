@@ -15,135 +15,48 @@
 <nav class="navbar">
     <div class="nav-container">
         <a href="/" class="nav-logo">
-            <i class="fas fa-map-marked-alt"></i>
-            SiLaras
+            <img src="<?= base_url('assets/images/SiLaras Logo.png') ?>" alt="SiLaras Logo" style="height: 50px;" srcset="">
         </a>
         
         <ul class="nav-menu" id="nav-menu">
             <li class="nav-item">
                 <a href="/" class="nav-link">
                     <i class="fas fa-home"></i>
-                    Dashboard
+                    Beranda
                 </a>
             </li>
             
-            <li class="nav-item dropdown">
-                <a href="#" class="nav-link">
-                    <i class="fas fa-layer-group"></i>
-                    Perencanaan
-                    <i class="fas fa-chevron-down" style="margin-left: 0.5rem; font-size: 0.8rem;"></i>
+            <li class="nav-item">
+                <a href="/peta-program" class="nav-link">
+                    <i class="fas fa-map-marked-alt"></i>
+                    Peta Program
                 </a>
-                <div class="dropdown-content">
-                    <a href="#" class="dropdown-item">
-                        <i class="fas fa-plus-circle"></i>
-                        Input Program OPD
-                    </a>
-                    <a href="#" class="dropdown-item">
-                        <i class="fas fa-tasks"></i>
-                        Rencana Strategis
-                    </a>
-                    <a href="#" class="dropdown-item">
-                        <i class="fas fa-calendar-alt"></i>
-                        Rencana Kerja
-                    </a>
-                    <a href="#" class="dropdown-item">
-                        <i class="fas fa-chart-line"></i>
-                        Analisis Program
-                    </a>
-                </div>
             </li>
             
-            <li class="nav-item dropdown">
-                <a href="#" class="nav-link">
+            <li class="nav-item">
+                <a href="/rpjmd" class="nav-link">
+                    <i class="fas fa-file-alt"></i>
+                    RPJMD
+                </a>
+            </li>
+            
+            <li class="nav-item">
+                <a href="/analisis" class="nav-link">
+                    <i class="fas fa-chart-line"></i>
+                    Analisis
+                </a>
+            </li>
+            
+            <li class="nav-item">
+                <a href="/monitoring" class="nav-link">
                     <i class="fas fa-chart-bar"></i>
                     Monitoring
-                    <i class="fas fa-chevron-down" style="margin-left: 0.5rem; font-size: 0.8rem;"></i>
                 </a>
-                <div class="dropdown-content">
-                    <a href="#" class="dropdown-item">
-                        <i class="fas fa-eye"></i>
-                        Monitoring Program
-                    </a>
-                    <a href="#" class="dropdown-item">
-                        <i class="fas fa-chart-pie"></i>
-                        Visualisasi Data
-                    </a>
-                    <a href="#" class="dropdown-item">
-                        <i class="fas fa-file-alt"></i>
-                        Laporan Progress
-                    </a>
-                </div>
-            </li>
-            
-            <li class="nav-item dropdown">
-                <a href="#" class="nav-link">
-                    <i class="fas fa-clipboard-check"></i>
-                    Evaluasi
-                    <i class="fas fa-chevron-down" style="margin-left: 0.5rem; font-size: 0.8rem;"></i>
-                </a>
-                <div class="dropdown-content">
-                    <a href="#" class="dropdown-item">
-                        <i class="fas fa-star"></i>
-                        Kinerja Program
-                    </a>
-                    <a href="#" class="dropdown-item">
-                        <i class="fas fa-bullseye"></i>
-                        Capaian Target
-                    </a>
-                    <a href="#" class="dropdown-item">
-                        <i class="fas fa-award"></i>
-                        Analisis Kualitas
-                    </a>
-                </div>
-            </li>
-            
-            <li class="nav-item dropdown">
-                <a href="#" class="nav-link">
-                    <i class="fas fa-map"></i>
-                    Geospasial
-                    <i class="fas fa-chevron-down" style="margin-left: 0.5rem; font-size: 0.8rem;"></i>
-                </a>
-                <div class="dropdown-content">
-                    <a href="#" class="dropdown-item">
-                        <i class="fas fa-globe"></i>
-                        Peta Interaktif
-                    </a>
-                    <a href="#" class="dropdown-item">
-                        <i class="fas fa-layer-group"></i>
-                        Layer Management
-                    </a>
-                    <a href="#" class="dropdown-item">
-                        <i class="fas fa-search-location"></i>
-                        Analisis Spasial
-                    </a>
-                </div>
-            </li>
-            
-            <li class="nav-item dropdown">
-                <a href="#" class="nav-link">
-                    <i class="fas fa-cog"></i>
-                    Pengaturan
-                    <i class="fas fa-chevron-down" style="margin-left: 0.5rem; font-size: 0.8rem;"></i>
-                </a>
-                <div class="dropdown-content">
-                    <a href="#" class="dropdown-item">
-                        <i class="fas fa-users"></i>
-                        Manajemen User
-                    </a>
-                    <a href="#" class="dropdown-item">
-                        <i class="fas fa-building"></i>
-                        Data OPD
-                    </a>
-                    <a href="#" class="dropdown-item">
-                        <i class="fas fa-database"></i>
-                        Backup Data
-                    </a>
-                </div>
             </li>
             
             <div class="user-info">
                 <i class="fas fa-user-circle"></i>
-                Kota Banjarbaru
+                User
             </div>
         </ul>
         
@@ -152,14 +65,6 @@
         </button>
     </div>
 </nav>
-
-<!-- HERO SECTION -->
-<section class="hero">
-    <div class="hero-container">
-        <h1>SiLaras</h1>
-        <p>Sistem Perencanaan Berbasis Geospasial untuk Aksi Perubahan Peningkatan Kinerja Infrastruktur Pembangunan, Riset dan Inovasi Daerah Kota Banjarbaru</p>
-    </div>
-</section>
           
 <div class="app">
     <?= $this->renderSection('content') ?>
@@ -174,7 +79,7 @@
 
 <!-- SCRIPTS -->
 
-<script src="<?= base_url('assets/js/script.js') ?>"></script>
+<script src="<?= base_url('assets/js/main.js') ?>"></script>
 
 <!-- -->
 

@@ -1,12 +1,51 @@
 /* SiLaras - Sistem Perencanaan Berbasis Geospasial */
-/* Main Stylesheet */
-
-:root {
+/* Main Stylesheet .nav-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 1.5rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    height: 70px;
+    gap: 2rem;
+}ot {
     --primary-color: #2563eb;
     --primary-dark: #1d4ed8;
     --secondary-color: #64748b;
     --accent-color: #10b981;
-    --danger-color: #ef4444;
+    --danger-color: /* Content Styles */
+.content {
+    max-width: 1200px;
+    margin: 2rem auto;
+    padding: 0 1.5rem;
+}
+
+@media (max-width: 1440px) {
+    .content {
+        padding: 0 2rem;
+    }
+}
+
+@media (max-width: 768px) {
+    .content {
+        padding: 0 1rem;
+        margin: 1.5rem auto;
+    }
+}
+
+@media (max-width: 480px) {
+    .content {
+        padding: 0 0.75rem;
+        margin: 1rem auto;
+    }
+}
+
+/* CSS Variables */
+:root {
+    --primary-color: #1e40af;
+    --secondary-color: #f3f4f6;
+    --accent-color: #06b6d4;
+    --success-color: #10b981;
     --warning-color: #f59e0b;
     --light-bg: #f8fafc;
     --white: #ffffff;
@@ -28,6 +67,14 @@ body {
     line-height: 1.6;
     color: var(--text-dark);
     background-color: var(--light-bg);
+    margin: 0;
+    padding: 0;
+    overflow-x: hidden;
+}
+
+/* App Container */
+.app {
+    position: relative;
 }
 
 /* Navigation Styles */
@@ -53,10 +100,6 @@ body {
 .nav-logo {
     display: flex;
     align-items: center;
-    font-size: 1.5rem;
-    font-weight: bold;
-    color: var(--primary-color);
-    text-decoration: none;
     transition: all 0.3s ease;
 }
 
@@ -64,16 +107,12 @@ body {
     color: var(--primary-dark);
 }
 
-.nav-logo i {
-    margin-right: 0.5rem;
-    font-size: 1.8rem;
-}
-
 .nav-menu {
     display: flex;
     list-style: none;
     margin: 0;
     padding: 0;
+    gap: 0.25rem;
 }
 
 .nav-item {
@@ -83,13 +122,13 @@ body {
 .nav-link {
     display: flex;
     align-items: center;
-    padding: 0.75rem 1rem;
+    padding: 0.75rem 1.5rem;
     color: var(--text-dark);
     text-decoration: none;
     font-weight: 500;
     transition: all 0.3s ease;
     border-radius: 6px;
-    margin: 0 0.25rem;
+    margin: 0 0.5rem;
 }
 
 .nav-link:hover {
@@ -179,29 +218,71 @@ body {
 
 /* Hero Section */
 .hero {
-    background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
+    background: linear-gradient(rgba(30, 64, 175, 0.7), rgba(30, 64, 175, 0.7)), url('../images/Balai Kota BJB.jpg');
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    background-attachment: fixed;
     color: var(--white);
     padding: 4rem 0;
     text-align: center;
+    width: 100vw;
+    margin: 0;
+    margin-left: calc(-50vw + 50%);
+    position: relative;
 }
 
 .hero-container {
     max-width: 1200px;
     margin: 0 auto;
-    padding: 0 1rem;
+    padding: 0 1.5rem;
+}
+
+@media (max-width: 1440px) {
+    .hero-container {
+        padding: 0 2rem;
+    }
+}
+
+@media (max-width: 768px) {
+    .hero {
+        padding: 3rem 0;
+        width: 100vw;
+        margin-left: calc(-50vw + 50%);
+        background-attachment: scroll;
+    }
+    
+    .hero-container {
+        padding: 0 1rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .hero {
+        padding: 2rem 0;
+        width: 100vw;
+        margin-left: calc(-50vw + 50%);
+        background-attachment: scroll;
+    }
+    
+    .hero-container {
+        padding: 0 0.75rem;
+    }
 }
 
 .hero h1 {
     font-size: 2.5rem;
     margin-bottom: 1rem;
     font-weight: 600;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
 }
 
 .hero p {
     font-size: 1.2rem;
-    opacity: 0.9;
+    opacity: 0.95;
     max-width: 600px;
     margin: 0 auto;
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
 }
 
 /* Content Styles */
@@ -289,8 +370,7 @@ body {
 footer {
     background: var(--text-dark);
     color: var(--white);
-    padding: 2rem 0;
-    margin-top: 4rem;
+    padding-bottom: 1rem;
 }
 
 .footer-content {
@@ -500,3 +580,18 @@ footer {
         font-size: 1.8rem;
     }
 }
+
+/* Full-Width Section Helper */
+.full-width-section {
+    width: 100vw;
+    margin-left: calc(-50vw + 50%);
+    position: relative;
+}
+
+/* Utility Classes */
+.w-full { width: 100%; }
+.text-center { text-align: center; }
+.mb-1 { margin-bottom: 0.5rem; }
+.mb-2 { margin-bottom: 1rem; }
+.mb-3 { margin-bottom: 1.5rem; }
+.mb-4 { margin-bottom: 2rem; }
