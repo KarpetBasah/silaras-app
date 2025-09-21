@@ -4,8 +4,8 @@
 <!-- HERO SECTION -->
 <section class="hero">
     <div class="hero-container">
-        <h1>SiLaras</h1>
-        <p>Sistem Perencanaan Berbasis Geospasial untuk Aksi Perubahan Peningkatan Kinerja Infrastruktur Pembangunan, Riset dan Inovasi Daerah Kota Banjarbaru</p>
+        <h1>GeoSelaras</h1>
+        <p>Satu Peta, Satu Arah Pembangunan - Platform Perencanaan Berbasis Geospasial untuk Keselarasan Program Pembangunan Daerah Kota Banjarbaru</p>
     </div>
 </section>
 
@@ -14,73 +14,73 @@
     <!-- Statistics Section -->
     <section class="stats">
         <div class="stat-card">
-            <div class="number">42</div>
-            <div class="label">Total Program</div>
+            <div class="number">156</div>
+            <div class="label">Program Terintegrasi</div>
         </div>
         <div class="stat-card">
-            <div class="number">58%</div>
-            <div class="label">Progress Realisasi</div>
+            <div class="number">85%</div>
+            <div class="label">Keselarasan RPJMD</div>
         </div>
         <div class="stat-card">
-            <div class="number">75%</div>
-            <div class="label">Capaian Target</div>
+            <div class="number">92%</div>
+            <div class="label">Validasi Spasial</div>
         </div>
         <div class="stat-card">
-            <div class="number">12</div>
-            <div class="label">OPD Terdaftar</div>
+            <div class="number">24</div>
+            <div class="label">OPD Berpartisipasi</div>
         </div>
     </section>
 
-    <h2 class="section-title">Fitur Utama SiLaras</h2>
+    <h2 class="section-title">Modul Utama GeoSelaras</h2>
     
     <!-- Features Section -->
     <section class="features">
         <div class="feature-card">
             <h3>
-                <i class="fas fa-layer-group"></i>
-                Perencanaan Terintegrasi
+                <i class="fas fa-plus-circle"></i>
+                Input Program OPD
             </h3>
-            <p>Sistem perencanaan pembangunan yang terintegrasi dengan data geospasial untuk mengoptimalkan alokasi sumber daya dan koordinasi antar OPD dalam pelaksanaan program pembangunan daerah.</p>
-        </div>
-        
-        <div class="feature-card">
-            <h3>
-                <i class="fas fa-chart-line"></i>
-                Monitoring Real-time
-            </h3>
-            <p>Pantau progress pelaksanaan program pembangunan secara real-time dengan visualisasi data yang interaktif dan komprehensif untuk memudahkan pengambilan keputusan strategis.</p>
+            <p>Form digital untuk memasukkan data program infrastruktur secara spasial dan tematik dengan validasi otomatis lokasi dan referensi RPJMD.</p>
         </div>
         
         <div class="feature-card">
             <h3>
                 <i class="fas fa-map-marked-alt"></i>
-                Analisis Geospasial
+                Visualisasi Peta Program
             </h3>
-            <p>Memanfaatkan teknologi GIS untuk analisis spasial yang mendalam, membantu identifikasi lokasi strategis dan optimalisasi sebaran program pembangunan infrastruktur.</p>
+            <p>Peta interaktif yang menampilkan titik lokasi program berdasarkan sektor dan status dengan layer yang dapat dikustomisasi.</p>
         </div>
         
         <div class="feature-card">
             <h3>
-                <i class="fas fa-clipboard-check"></i>
-                Evaluasi Kinerja
+                <i class="fas fa-file-alt"></i>
+                Layer RPJMD
             </h3>
-            <p>Sistem evaluasi komprehensif untuk mengukur kinerja program dengan indikator yang terukur, mendukung peningkatan kualitas perencanaan di masa mendatang.</p>
+            <p>Overlay peta prioritas RPJMD untuk analisis keselarasan program dengan kawasan strategis dan sasaran pembangunan tematik.</p>
         </div>
         
         <div class="feature-card">
             <h3>
-                <i class="fas fa-users"></i>
-                Kolaborasi Multi-OPD
+                <i class="fas fa-chart-line"></i>
+                Analisis Tumpang Tindih
             </h3>
-            <p>Platform kolaborasi yang memungkinkan koordinasi efektif antar OPD dalam perencanaan, pelaksanaan, dan evaluasi program pembangunan daerah.</p>
+            <p>Algoritma spasial untuk mendeteksi konflik lokasi dan wilayah kosong, memberikan rekomendasi wilayah prioritas berdasarkan data spasial.</p>
         </div>
         
         <div class="feature-card">
             <h3>
-                <i class="fas fa-chart-pie"></i>
-                Dashboard Analitik
+                <i class="fas fa-chart-bar"></i>
+                Monitoring & Evaluasi
             </h3>
-            <p>Dashboard interaktif dengan visualisasi data yang komprehensif untuk memberikan insight mendalam tentang progress dan pencapaian program pembangunan.</p>
+            <p>Visualisasi progres fisik dan realisasi anggaran dalam peta dinamis dengan form input progres dan foto lapangan.</p>
+        </div>
+        
+        <div class="feature-card">
+            <h3>
+                <i class="fas fa-comments"></i>
+                Komunikasi & Dokumentasi
+            </h3>
+            <p>Forum OPD untuk diskusi teknis, form masukan publik, dan tautan ke regulasi, RPJMD, serta SOP sistem.</p>
         </div>
     </section>
 </div>
