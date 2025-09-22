@@ -4,7 +4,7 @@
 <!-- HERO SECTION -->
 <section class="hero">
     <div class="hero-container">
-        <h1>GeoSelaras</h1>
+        <h1>SiLaras</h1>
         <p>Satu Peta, Satu Arah Pembangunan - Platform Perencanaan Berbasis Geospasial untuk Keselarasan Program Pembangunan Daerah Kota Banjarbaru</p>
     </div>
 </section>
@@ -31,7 +31,7 @@
         </div>
     </section>
 
-    <h2 class="section-title">Modul Utama GeoSelaras</h2>
+    <h2 class="section-title">Modul Utama SiLaras</h2>
     
     <!-- Features Section -->
     <section class="features">

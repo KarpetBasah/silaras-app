@@ -2,7 +2,7 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <title>GeoSelaras - Satu Peta, Satu Arah Pembangunan</title>
+    <title>SiLaras - Satu Peta, Satu Arah Pembangunan</title>
     <meta name="description" content="GeoSelaras - Platform Perencanaan Berbasis Geospasial untuk Keselarasan Program Pembangunan Daerah">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="shortcut icon" type="image/png" href="/favicon.ico">
@@ -81,7 +81,7 @@
 <!-- FOOTER -->
 <footer>
     <div class="footer-bottom">
-        <p>&copy; <?= date('Y') ?> Pemerintah Kota Banjarbaru. GeoSelaras - Satu Peta, Satu Arah Pembangunan.</p>
+        <p>&copy; <?= date('Y') ?> BAPPERIDA Kota Banjarbaru. SiLaras - Satu Peta, Satu Arah Pembangunan.</p>
     </div>
 </footer>
 
