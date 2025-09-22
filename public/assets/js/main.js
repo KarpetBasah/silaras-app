@@ -39,6 +39,9 @@ document.addEventListener('DOMContentLoaded', function() {
     // Initialize page-specific features
     if (document.getElementById('program-map')) {
         // Map will be initialized by inline script in the view
+        // Add scroll listener to ensure z-index remains correct
+        window.addEventListener('scroll', throttle(fixMapZIndex, 100));
+        window.addEventListener('resize', throttle(fixMapZIndex, 100));
     }
     
     // Mobile dropdown toggle
@@ -343,11 +346,14 @@ function initProgramMap() {
     
     // Add OpenStreetMap tiles
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '© OpenStreetMap contributors'
+        attribution: '© <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> contributors'
     }).addTo(programMap);
     
     // Initialize markers layer
     markersLayer = L.layerGroup().addTo(programMap);
+    
+    // Fix z-index issues with Leaflet controls
+    fixLeafletZIndex();
     
     // Load program data
     loadProgramData();
@@ -623,6 +629,64 @@ function animateCounter(element, start, end, duration = 1000) {
         }
     };
     window.requestAnimationFrame(step);
+}
+
+function fixLeafletZIndex() {
+    // Fix z-index for Leaflet controls to prevent overlay with navbar
+    setTimeout(() => {
+        const leafletControls = document.querySelectorAll('.leaflet-control-container .leaflet-control');
+        leafletControls.forEach(control => {
+            control.style.zIndex = '500';
+        });
+        
+        // Fix zoom controls specifically
+        const zoomControls = document.querySelectorAll('.leaflet-control-zoom');
+        zoomControls.forEach(control => {
+            control.style.zIndex = '500';
+        });
+        
+        // Fix attribution
+        const attribution = document.querySelectorAll('.leaflet-control-attribution');
+        attribution.forEach(control => {
+            control.style.zIndex = '500';
+        });
+        
+        // Set map container z-index
+        const mapContainer = document.getElementById('program-map');
+        if (mapContainer) {
+            mapContainer.style.zIndex = '1';
+        }
+        
+        // Ensure legend has proper z-index
+        const legend = document.querySelector('.map-legend');
+        if (legend) {
+            legend.style.zIndex = '500';
+        }
+    }, 100);
+}
+
+function fixMapZIndex() {
+    // Ensure navbar always has highest z-index
+    const navbar = document.querySelector('.navbar');
+    if (navbar) {
+        navbar.style.zIndex = '1000';
+    }
+    
+    // Re-apply Leaflet control fixes
+    fixLeafletZIndex();
+}
+
+function throttle(func, limit) {
+    let inThrottle;
+    return function() {
+        const args = arguments;
+        const context = this;
+        if (!inThrottle) {
+            func.apply(context, args);
+            inThrottle = true;
+            setTimeout(() => inThrottle = false, limit);
+        }
+    }
 }
 
 // Utility functions

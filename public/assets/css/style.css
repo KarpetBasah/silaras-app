@@ -83,8 +83,10 @@ body {
     box-shadow: var(--shadow);
     position: sticky;
     top: 0;
-    z-index: 1000;
+    z-index: 1000 !important;
     border-bottom: 3px solid var(--primary-color);
+    /* Ensure navbar stays above all other elements */
+    isolation: isolate;
 }
 
 .nav-container {
@@ -1207,7 +1209,7 @@ footer {
     padding: 1rem;
     box-shadow: var(--shadow-lg);
     max-width: 250px;
-    z-index: 1000;
+    z-index: 500;
     border: 1px solid var(--border-color);
 }
 
@@ -1456,6 +1458,58 @@ footer {
     color: var(--primary-color);
 }
 
+/* Leaflet Controls Z-Index Fix */
+.leaflet-control-container {
+    z-index: 500 !important;
+}
+
+.leaflet-control-container * {
+    z-index: 500 !important;
+}
+
+.leaflet-control-zoom {
+    z-index: 500 !important;
+}
+
+.leaflet-control-zoom * {
+    z-index: 500 !important;
+}
+
+.leaflet-control-attribution {
+    z-index: 500 !important;
+}
+
+.leaflet-popup-pane {
+    z-index: 600 !important;
+}
+
+.leaflet-tooltip-pane {
+    z-index: 650 !important;
+}
+
+/* Ensure all Leaflet elements stay below navbar */
+.leaflet-map-pane {
+    z-index: auto !important;
+}
+
+.leaflet-tile-pane {
+    z-index: auto !important;
+}
+
+.leaflet-objects-pane {
+    z-index: auto !important;
+}
+
+/* Map Container Z-Index */
+.map-container {
+    position: relative;
+    z-index: 1;
+}
+
+#program-map {
+    z-index: 1;
+}
+
 /* Responsive Map */
 @media (max-width: 768px) {
     .control-panel {
@@ -1473,6 +1527,16 @@ footer {
         right: auto;
         margin-top: 1rem;
         max-width: none;
+        z-index: 100;
+    }
+    
+    /* Ensure Leaflet controls don't interfere on mobile */
+    .leaflet-control-container {
+        z-index: 100 !important;
+    }
+    
+    .leaflet-control-zoom {
+        z-index: 100 !important;
     }
     
     .stats-grid {
