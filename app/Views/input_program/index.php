@@ -20,15 +20,15 @@
             <h3><i class="fas fa-chart-bar"></i> Statistik Program</h3>
             <div class="stats-mini">
                 <div class="stat-item">
-                    <span class="number">42</span>
+                    <span class="number"><?= $stats['active_programs'] ?></span>
                     <span class="label">Program Aktif</span>
                 </div>
                 <div class="stat-item">
-                    <span class="number">156</span>
+                    <span class="number"><?= $stats['total_programs'] ?></span>
                     <span class="label">Total Program</span>
                 </div>
                 <div class="stat-item">
-                    <span class="number">24</span>
+                    <span class="number"><?= $stats['total_opd'] ?></span>
                     <span class="label">OPD Terdaftar</span>
                 </div>
             </div>
@@ -60,30 +60,29 @@
         <div class="module-card recent-programs">
             <h3><i class="fas fa-history"></i> Program Terbaru</h3>
             <div class="program-list">
-                <!-- TODO: Dynamic program list from database -->
-                <div class="program-item">
-                    <div class="program-info">
-                        <strong>Pembangunan Jalan Lingkar Timur</strong>
-                        <span class="program-meta">Dinas PUPR • 2024 • Rp 2.5M</span>
+                <?php if (!empty($recentPrograms)): ?>
+                    <?php foreach ($recentPrograms as $program): ?>
+                        <div class="program-item">
+                            <div class="program-info">
+                                <strong><?= esc($program['nama_kegiatan']) ?></strong>
+                                <span class="program-meta">
+                                    <?= esc($program['opd_singkat']) ?> • 
+                                    <?= $program['tahun_pelaksanaan'] ?> • 
+                                    Rp <?= number_format($program['anggaran_total'] / 1000000, 1) ?>M
+                                </span>
+                            </div>
+                            <span class="status-badge status-<?= $program['status'] ?>">
+                                <?= ucfirst($program['status']) ?>
+                            </span>
+                        </div>
+                    <?php endforeach; ?>
+                <?php else: ?>
+                    <div class="program-item">
+                        <div class="program-info">
+                            <span class="text-muted">Belum ada program yang diinputkan</span>
+                        </div>
                     </div>
-                    <span class="status-badge status-planning">Perencanaan</span>
-                </div>
-                
-                <div class="program-item">
-                    <div class="program-info">
-                        <strong>Rehabilitasi Saluran Irigasi Martapura</strong>
-                        <span class="program-meta">Dinas Pertanian • 2024 • Rp 1.8M</span>
-                    </div>
-                    <span class="status-badge status-progress">Berjalan</span>
-                </div>
-                
-                <div class="program-item">
-                    <div class="program-info">
-                        <strong>Pembangunan PAUD Terpadu</strong>
-                        <span class="program-meta">Dinas Pendidikan • 2024 • Rp 850K</span>
-                    </div>
-                    <span class="status-badge status-completed">Selesai</span>
-                </div>
+                <?php endif; ?>
             </div>
         </div>
         

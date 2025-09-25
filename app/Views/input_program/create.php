@@ -64,12 +64,12 @@
                         </div>
                         
                         <div class="form-group">
-                            <label for="anggaran">Anggaran (Rupiah) <span class="required">*</span></label>
+                            <label for="anggaran_total">Anggaran (Rupiah) <span class="required">*</span></label>
                             <input type="number" 
-                                   id="anggaran" 
-                                   name="anggaran" 
+                                   id="anggaran_total" 
+                                   name="anggaran_total" 
                                    class="form-control" 
-                                   value="<?= old('anggaran') ?>"
+                                   value="<?= old('anggaran_total') ?>"
                                    placeholder="0" 
                                    min="1" 
                                    required>
@@ -82,34 +82,34 @@
                     <h3><i class="fas fa-map-marker-alt"></i> Informasi Lokasi</h3>
                     
                     <div class="form-group">
-                        <label for="alamat">Alamat Lokasi</label>
-                        <textarea id="alamat" 
-                                  name="alamat" 
+                        <label for="lokasi_alamat">Alamat Lokasi</label>
+                        <textarea id="lokasi_alamat" 
+                                  name="lokasi_alamat" 
                                   class="form-control" 
                                   rows="2" 
-                                  placeholder="Alamat lengkap lokasi program"><?= old('alamat') ?></textarea>
+                                  placeholder="Alamat lengkap lokasi program"><?= old('lokasi_alamat') ?></textarea>
                     </div>
                     
                     <div class="form-row">
                         <div class="form-group">
-                            <label for="lokasi_lat">Latitude <span class="required">*</span></label>
+                            <label for="koordinat_lat">Latitude <span class="required">*</span></label>
                             <input type="text" 
-                                   id="lokasi_lat" 
-                                   name="lokasi_lat" 
+                                   id="koordinat_lat" 
+                                   name="koordinat_lat" 
                                    class="form-control" 
-                                   value="<?= old('lokasi_lat') ?>"
+                                   value="<?= old('koordinat_lat') ?>"
                                    placeholder="-3.4582" 
                                    pattern="-?[0-9]+\.?[0-9]*"
                                    required>
                         </div>
                         
                         <div class="form-group">
-                            <label for="lokasi_lng">Longitude <span class="required">*</span></label>
+                            <label for="koordinat_lng">Longitude <span class="required">*</span></label>
                             <input type="text" 
-                                   id="lokasi_lng" 
-                                   name="lokasi_lng" 
+                                   id="koordinat_lng" 
+                                   name="koordinat_lng" 
                                    class="form-control" 
-                                   value="<?= old('lokasi_lng') ?>"
+                                   value="<?= old('koordinat_lng') ?>"
                                    placeholder="114.8348" 
                                    pattern="-?[0-9]+\.?[0-9]*"
                                    required>
@@ -133,40 +133,38 @@
                     <h3><i class="fas fa-tags"></i> Kategorisasi</h3>
                     
                     <div class="form-group">
-                        <label for="sektor">Sektor <span class="required">*</span></label>
-                        <select id="sektor" name="sektor" class="form-control" required>
+                        <label for="sektor_id">Sektor <span class="required">*</span></label>
+                        <select id="sektor_id" name="sektor_id" class="form-control" required>
                             <option value="">Pilih Sektor</option>
-                            <option value="jalan" <?= old('sektor') == 'jalan' ? 'selected' : '' ?>>Jalan dan Transportasi</option>
-                            <option value="irigasi" <?= old('sektor') == 'irigasi' ? 'selected' : '' ?>>Irigasi dan Pengairan</option>
-                            <option value="pendidikan" <?= old('sektor') == 'pendidikan' ? 'selected' : '' ?>>Pendidikan</option>
-                            <option value="kesehatan" <?= old('sektor') == 'kesehatan' ? 'selected' : '' ?>>Kesehatan</option>
-                            <option value="ekonomi" <?= old('sektor') == 'ekonomi' ? 'selected' : '' ?>>Ekonomi dan Perdagangan</option>
-                            <option value="sosial" <?= old('sektor') == 'sosial' ? 'selected' : '' ?>>Sosial dan Budaya</option>
+                            <?php foreach ($sektor_list as $sektor): ?>
+                                <option value="<?= $sektor['id'] ?>" <?= old('sektor_id') == $sektor['id'] ? 'selected' : '' ?>>
+                                    <?= $sektor['nama_sektor'] ?>
+                                </option>
+                            <?php endforeach; ?>
                         </select>
                     </div>
                     
                     <div class="form-group">
-                        <label for="sasaran_rpjmd">Sasaran RPJMD <span class="required">*</span></label>
-                        <select id="sasaran_rpjmd" name="sasaran_rpjmd" class="form-control" required>
+                        <label for="rpjmd_sasaran_id">Sasaran RPJMD <span class="required">*</span></label>
+                        <select id="rpjmd_sasaran_id" name="rpjmd_sasaran_id" class="form-control" required>
                             <option value="">Pilih Sasaran RPJMD</option>
-                            <option value="infrastruktur_dasar" <?= old('sasaran_rpjmd') == 'infrastruktur_dasar' ? 'selected' : '' ?>>Pembangunan Infrastruktur Dasar</option>
-                            <option value="pendidikan_berkualitas" <?= old('sasaran_rpjmd') == 'pendidikan_berkualitas' ? 'selected' : '' ?>>Pendidikan Berkualitas</option>
-                            <option value="kesehatan_masyarakat" <?= old('sasaran_rpjmd') == 'kesehatan_masyarakat' ? 'selected' : '' ?>>Kesehatan Masyarakat</option>
-                            <option value="ekonomi_berkelanjutan" <?= old('sasaran_rpjmd') == 'ekonomi_berkelanjutan' ? 'selected' : '' ?>>Ekonomi Berkelanjutan</option>
-                            <option value="lingkungan_lestari" <?= old('sasaran_rpjmd') == 'lingkungan_lestari' ? 'selected' : '' ?>>Lingkungan Lestari</option>
+                            <?php foreach ($rpjmd_list as $rpjmd): ?>
+                                <option value="<?= $rpjmd['id'] ?>" <?= old('rpjmd_sasaran_id') == $rpjmd['id'] ? 'selected' : '' ?>>
+                                    <?= $rpjmd['nama_sasaran'] ?>
+                                </option>
+                            <?php endforeach; ?>
                         </select>
                     </div>
                     
                     <div class="form-group">
-                        <label for="opd">OPD Pelaksana <span class="required">*</span></label>
-                        <select id="opd" name="opd" class="form-control" required>
+                        <label for="opd_id">OPD Pelaksana <span class="required">*</span></label>
+                        <select id="opd_id" name="opd_id" class="form-control" required>
                             <option value="">Pilih OPD</option>
-                            <option value="dinas_pupr" <?= old('opd') == 'dinas_pupr' ? 'selected' : '' ?>>Dinas PUPR</option>
-                            <option value="dinas_pendidikan" <?= old('opd') == 'dinas_pendidikan' ? 'selected' : '' ?>>Dinas Pendidikan</option>
-                            <option value="dinas_kesehatan" <?= old('opd') == 'dinas_kesehatan' ? 'selected' : '' ?>>Dinas Kesehatan</option>
-                            <option value="dinas_pertanian" <?= old('opd') == 'dinas_pertanian' ? 'selected' : '' ?>>Dinas Pertanian</option>
-                            <option value="dinas_perdagangan" <?= old('opd') == 'dinas_perdagangan' ? 'selected' : '' ?>>Dinas Perdagangan</option>
-                            <option value="bappeda" <?= old('opd') == 'bappeda' ? 'selected' : '' ?>>BAPPEDA</option>
+                            <?php foreach ($opd_list as $opd): ?>
+                                <option value="<?= $opd['id'] ?>" <?= old('opd_id') == $opd['id'] ? 'selected' : '' ?>>
+                                    <?= $opd['nama_singkat'] ?>
+                                </option>
+                            <?php endforeach; ?>
                         </select>
                     </div>
                 </div>
@@ -220,7 +218,7 @@
     </div>
 </div>
 
-<!-- Simple Map Modal (placeholder) -->
+<!-- Interactive Map Modal -->
 <div id="map-modal" class="modal" style="display: none;">
     <div class="modal-content">
         <div class="modal-header">
@@ -228,13 +226,25 @@
             <button type="button" class="modal-close">&times;</button>
         </div>
         <div class="modal-body">
-            <div id="map-picker" style="height: 400px; background: #e2e8f0; display: flex; align-items: center; justify-content: center; color: #64748b;">
-                Peta akan dimuat di sini (integrasi dengan Leaflet.js)
+            <div style="margin-bottom: 1rem;">
+                <p style="margin: 0; color: #64748b; font-size: 0.9rem;">
+                    <i class="fas fa-info-circle"></i> Klik di peta untuk memilih lokasi atau seret marker untuk memindahkan posisi
+                </p>
+                <div id="temp-coordinates" style="margin-top: 0.5rem; padding: 0.5rem; background: #f8fafc; border-radius: 4px; font-family: monospace; font-size: 0.85rem; color: #374151;">
+                    Koordinat akan ditampilkan di sini setelah memilih lokasi
+                </div>
+            </div>
+            <div id="map-picker" style="height: 400px; background: #e2e8f0; border-radius: 8px; overflow: hidden;">
+                <!-- Leaflet map will be initialized here -->
             </div>
         </div>
         <div class="modal-footer">
-            <button type="button" class="btn btn-primary" id="confirm-location">Gunakan Lokasi Ini</button>
-            <button type="button" class="btn btn-secondary modal-close">Batal</button>
+            <button type="button" class="btn btn-primary" onclick="confirmLocationSelection()">
+                <i class="fas fa-map-pin"></i> Gunakan Lokasi Ini
+            </button>
+            <button type="button" class="btn btn-secondary modal-close">
+                <i class="fas fa-times"></i> Batal
+            </button>
         </div>
     </div>
 </div>

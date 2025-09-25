@@ -25,15 +25,12 @@ class ProgramModel extends Model
     protected bool $updateOnlyChanged = true;
 
     protected array $casts = [
-        'koordinat_lat' => 'decimal',
-        'koordinat_lng' => 'decimal',
+        'koordinat_lat' => 'float',
+        'koordinat_lng' => 'float',
         'anggaran_total' => 'int',
         'anggaran_realisasi' => 'int',
-        'progress_fisik' => 'decimal',
-        'is_prioritas' => 'boolean',
-        'tanggal_mulai' => 'datetime',
-        'tanggal_selesai_rencana' => 'datetime',
-        'tanggal_selesai_aktual' => 'datetime'
+        'progress_fisik' => 'float',
+        'is_prioritas' => 'boolean'
     ];
     protected array $castHandlers = [];
 

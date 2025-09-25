@@ -3,107 +3,228 @@
 namespace App\Controllers;
 
 use CodeIgniter\Controller;
+use App\Models\ProgramModel;
+use App\Models\OPDModel;
+use App\Models\SektorModel;
+use App\Models\RpjmdSasaranModel;
 
 class PetaProgram extends BaseController
 {
+    protected $programModel;
+    protected $opdModel;
+    protected $sektorModel;
+    protected $rpjmdSasaranModel;
+
+    public function initController(\CodeIgniter\HTTP\RequestInterface $request, \CodeIgniter\HTTP\ResponseInterface $response, \Psr\Log\LoggerInterface $logger)
+    {
+        parent::initController($request, $response, $logger);
+        
+        $this->programModel = new ProgramModel();
+        $this->opdModel = new OPDModel();
+        $this->sektorModel = new SektorModel();
+        $this->rpjmdSasaranModel = new RpjmdSasaranModel();
+    }
+
     public function index()
     {
+        // Get filter options
         $data = [
             'title' => 'Peta Program - GeoSelaras',
-            'page' => 'peta-program'
+            'page' => 'peta-program',
+            'opd_list' => $this->opdModel->getActive(),
+            'sektor_list' => $this->sektorModel->getActive(),
+            'tahun_list' => $this->getTahunList()
         ];
         
         return view('peta_program/index', $data);
     }
+
+    /**
+     * Get available years from programs
+     */
+    private function getTahunList()
+    {
+        $tahunData = $this->programModel->select('tahun_pelaksanaan')
+                                        ->distinct()
+                                        ->orderBy('tahun_pelaksanaan', 'DESC')
+                                        ->findAll();
+        
+        $tahunList = [];
+        foreach ($tahunData as $row) {
+            $tahunList[] = $row['tahun_pelaksanaan'];
+        }
+        
+        return $tahunList;
+    }
     
     public function getProgramData()
     {
-        // TODO: Get data from database
-        // Sample data for now
-        $programs = [
-            [
-                'id' => 1,
-                'nama_kegiatan' => 'Pembangunan Jalan Lingkar Timur',
-                'lat' => -3.4582,
-                'lng' => 114.8348,
-                'sektor' => 'jalan',
-                'status' => 'perencanaan',
-                'anggaran' => 2500000000,
-                'tahun' => 2024,
-                'opd' => 'Dinas PUPR'
-            ],
-            [
-                'id' => 2,
-                'nama_kegiatan' => 'Rehabilitasi Saluran Irigasi Martapura',
-                'lat' => -3.4650,
-                'lng' => 114.8400,
-                'sektor' => 'irigasi',
-                'status' => 'berjalan',
-                'anggaran' => 1800000000,
-                'tahun' => 2024,
-                'opd' => 'Dinas Pertanian'
-            ],
-            [
-                'id' => 3,
-                'nama_kegiatan' => 'Pembangunan PAUD Terpadu',
-                'lat' => -3.4520,
-                'lng' => 114.8280,
-                'sektor' => 'pendidikan',
-                'status' => 'selesai',
-                'anggaran' => 850000000,
-                'tahun' => 2024,
-                'opd' => 'Dinas Pendidikan'
-            ],
-            [
-                'id' => 4,
-                'nama_kegiatan' => 'Pengembangan Pasar Tradisional',
-                'lat' => -3.4600,
-                'lng' => 114.8320,
-                'sektor' => 'ekonomi',
-                'status' => 'perencanaan',
-                'anggaran' => 3200000000,
-                'tahun' => 2025,
-                'opd' => 'Dinas Perdagangan'
-            ],
-            [
-                'id' => 5,
-                'nama_kegiatan' => 'Pembangunan Puskesmas Pembantu',
-                'lat' => -3.4480,
-                'lng' => 114.8420,
-                'sektor' => 'kesehatan',
-                'status' => 'berjalan',
-                'anggaran' => 1950000000,
-                'tahun' => 2024,
-                'opd' => 'Dinas Kesehatan'
-            ]
+        // Get filter parameters
+        $filters = [
+            'sektor_id' => $this->request->getGet('sektor_id'),
+            'opd_id' => $this->request->getGet('opd_id'),
+            'tahun' => $this->request->getGet('tahun'),
+            'status' => $this->request->getGet('status')
         ];
+
+        // Get programs with relations
+        $programs = $this->programModel->getProgramsWithRelations($filters);
+        
+        // Format data for map display
+        $mapData = [];
+        foreach ($programs as $program) {
+            $mapData[] = [
+                'id' => $program['id'],
+                'nama_kegiatan' => $program['nama_kegiatan'],
+                'deskripsi' => $program['deskripsi'],
+                'lat' => (float)$program['koordinat_lat'],
+                'lng' => (float)$program['koordinat_lng'],
+                'lokasi_alamat' => $program['lokasi_alamat'],
+                'sektor' => [
+                    'id' => $program['sektor_id'],
+                    'nama' => $program['nama_sektor'],
+                    'icon' => $program['sektor_icon'],
+                    'color' => $program['sektor_color']
+                ],
+                'opd' => [
+                    'id' => $program['opd_id'],
+                    'nama' => $program['nama_opd'],
+                    'singkat' => $program['opd_singkat']
+                ],
+                'rpjmd' => [
+                    'id' => $program['rpjmd_sasaran_id'],
+                    'nama' => $program['rpjmd_nama']
+                ],
+                'status' => $program['status'],
+                'progress_fisik' => (float)$program['progress_fisik'],
+                'anggaran_total' => (int)$program['anggaran_total'],
+                'anggaran_realisasi' => (int)$program['anggaran_realisasi'],
+                'tahun_pelaksanaan' => $program['tahun_pelaksanaan'],
+                'tanggal_mulai' => $program['tanggal_mulai'],
+                'tanggal_selesai_rencana' => $program['tanggal_selesai_rencana'],
+                'is_prioritas' => (bool)$program['is_prioritas']
+            ];
+        }
+
+        // Calculate statistics
+        $stats = $this->calculateStats($programs);
         
         return $this->response->setJSON([
             'success' => true,
-            'data' => $programs
+            'data' => $mapData,
+            'stats' => $stats,
+            'total' => count($mapData)
         ]);
     }
     
     public function getProgramDetail($id)
     {
-        // TODO: Get specific program data from database
-        return $this->response->setJSON([
-            'success' => true,
-            'data' => [
-                'id' => $id,
-                'nama_kegiatan' => 'Sample Program',
-                'deskripsi' => 'Deskripsi detail program',
-                'lokasi' => 'Alamat lokasi program',
-                'koordinat' => [-3.4582, 114.8348],
-                'sektor' => 'infrastruktur',
-                'status' => 'perencanaan',
-                'anggaran' => 2500000000,
-                'tahun_pelaksanaan' => 2024,
-                'opd' => 'Sample OPD',
-                'sasaran_rpjmd' => 'Sample sasaran RPJMD',
-                'progress_fisik' => 45,
-                'realisasi_anggaran' => 35
-            ]
-        ]);
+        try {
+            $program = $this->programModel->getProgramDetail($id);
+            
+            if (!$program) {
+                return $this->response->setJSON([
+                    'success' => false,
+                    'message' => 'Program tidak ditemukan'
+                ]);
+            }
+
+            // Get program documents
+            $programDokumenModel = new \App\Models\ProgramDokumenModel();
+            $documents = $programDokumenModel->getByProgramId($id);
+
+            $data = [
+                'id' => $program['id'],
+                'kode_program' => $program['kode_program'],
+                'nama_kegiatan' => $program['nama_kegiatan'],
+                'deskripsi' => $program['deskripsi'],
+                'lokasi_alamat' => $program['lokasi_alamat'],
+                'koordinat' => [
+                    'lat' => (float)$program['koordinat_lat'],
+                    'lng' => (float)$program['koordinat_lng']
+                ],
+                'sektor' => [
+                    'nama' => $program['nama_sektor'],
+                    'icon' => $program['sektor_icon'],
+                    'color' => $program['sektor_color']
+                ],
+                'opd' => [
+                    'nama' => $program['nama_opd'],
+                    'kepala' => $program['kepala_opd']
+                ],
+                'rpjmd' => [
+                    'nama' => $program['rpjmd_nama'],
+                    'deskripsi' => $program['rpjmd_deskripsi']
+                ],
+                'status' => $program['status'],
+                'progress_fisik' => (float)$program['progress_fisik'],
+                'anggaran_total' => (int)$program['anggaran_total'],
+                'anggaran_realisasi' => (int)$program['anggaran_realisasi'],
+                'tahun_pelaksanaan' => $program['tahun_pelaksanaan'],
+                'tanggal_mulai' => $program['tanggal_mulai'],
+                'tanggal_selesai_rencana' => $program['tanggal_selesai_rencana'],
+                'tanggal_selesai_aktual' => $program['tanggal_selesai_aktual'],
+                'kontraktor' => $program['kontraktor'],
+                'konsultan' => $program['konsultan'],
+                'sumber_dana' => $program['sumber_dana'],
+                'catatan' => $program['catatan'],
+                'is_prioritas' => (bool)$program['is_prioritas'],
+                'documents' => $documents
+            ];
+
+            return $this->response->setJSON([
+                'success' => true,
+                'data' => $data
+            ]);
+
+        } catch (\Exception $e) {
+            log_message('error', 'Error getting program detail: ' . $e->getMessage());
+            return $this->response->setJSON([
+                'success' => false,
+                'message' => 'Terjadi kesalahan saat mengambil detail program'
+            ]);
+        }
+    }
+
+    /**
+     * Calculate statistics from program data
+     */
+    private function calculateStats($programs)
+    {
+        $stats = [
+            'total' => count($programs),
+            'perencanaan' => 0,
+            'persiapan' => 0,
+            'lelang' => 0,
+            'pelaksanaan' => 0,
+            'monitoring' => 0,
+            'selesai' => 0,
+            'batal' => 0,
+            'total_anggaran' => 0,
+            'realisasi_anggaran' => 0,
+            'progress_rata' => 0
+        ];
+
+        $totalProgress = 0;
+        foreach ($programs as $program) {
+            // Count by status
+            if (isset($stats[$program['status']])) {
+                $stats[$program['status']]++;
+            }
+            
+            // Sum budget
+            $stats['total_anggaran'] += (int)$program['anggaran_total'];
+            $stats['realisasi_anggaran'] += (int)$program['anggaran_realisasi'];
+            
+            // Sum progress
+            $totalProgress += (float)$program['progress_fisik'];
+        }
+
+        // Calculate average progress
+        if ($stats['total'] > 0) {
+            $stats['progress_rata'] = round($totalProgress / $stats['total'], 2);
+        }
+
+        return $stats;
     }
 }

@@ -951,6 +951,17 @@ footer {
     box-shadow: 0 0 0 3px rgba(30, 64, 175, 0.1);
 }
 
+/* Textarea-specific styles to prevent overflow */
+textarea.form-control {
+    resize: vertical;
+    min-height: 80px;
+    max-height: 200px;
+    max-width: 100%;
+    overflow-y: auto;
+    font-family: inherit;
+    line-height: 1.5;
+}
+
 .form-control-file {
     width: 100%;
     padding: 0.5rem;
@@ -1051,7 +1062,8 @@ footer {
     width: 90%;
     max-width: 800px;
     max-height: 90vh;
-    overflow: hidden;
+    display: flex;
+    flex-direction: column;
     box-shadow: var(--shadow-lg);
 }
 
@@ -1071,7 +1083,7 @@ footer {
 .modal-close {
     background: none;
     border: none;
-    font-size: 1.5rem;
+    font-size: 1rem;
     cursor: pointer;
     color: var(--text-light);
     padding: 0;
@@ -1091,6 +1103,31 @@ footer {
 
 .modal-body {
     padding: 1.5rem;
+    overflow-y: auto;
+    overflow-x: hidden;
+    flex: 1;
+    max-height: calc(90vh - 140px); /* Subtract header and footer height */
+    -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
+    scrollbar-width: thin;
+    scrollbar-color: var(--primary-color) var(--light-bg);
+}
+
+/* Custom scrollbar for webkit browsers */
+.modal-body::-webkit-scrollbar {
+    width: 6px;
+}
+
+.modal-body::-webkit-scrollbar-track {
+    background: var(--light-bg);
+}
+
+.modal-body::-webkit-scrollbar-thumb {
+    background: var(--primary-color);
+    border-radius: 3px;
+}
+
+.modal-body::-webkit-scrollbar-thumb:hover {
+    background: var(--primary-dark);
 }
 
 .modal-footer {
@@ -1099,6 +1136,34 @@ footer {
     display: flex;
     gap: 1rem;
     justify-content: flex-end;
+}
+
+/* Map Picker Modal Styles */
+#map-modal .modal-content {
+    max-width: 900px;
+}
+
+#map-picker {
+    position: relative;
+}
+
+.leaflet-control-custom {
+    background: white;
+    border: 2px solid rgba(0,0,0,0.2);
+    background-clip: padding-box;
+    border-radius: 4px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+}
+
+.leaflet-control-custom:hover {
+    background: #f4f4f4;
+}
+
+#temp-coordinates {
+    min-height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 /* Responsive adjustments */
@@ -1111,6 +1176,46 @@ footer {
     .stats-mini {
         flex-direction: column;
         gap: 0.75rem;
+    }
+    
+    .modal-content {
+        width: 95%;
+        max-height: 95vh;
+        margin: 1rem;
+    }
+    
+    .modal-body {
+        padding: 1rem;
+        max-height: calc(95vh - 120px);
+    }
+    
+    .modal-header,
+    .modal-footer {
+        padding: 1rem;
+    }
+    
+    .detail-table td {
+        padding: 0.4rem 0;
+        font-size: 0.85rem;
+    }
+    
+    .detail-table td:first-child {
+        width: 35%;
+    }
+    
+    /* Map Picker Mobile Styles */
+    #map-modal .modal-content {
+        width: 98%;
+        max-height: 98vh;
+    }
+    
+    #map-picker {
+        height: 300px !important;
+    }
+    
+    #temp-coordinates {
+        font-size: 0.8rem;
+        padding: 0.4rem;
     }
     
     .program-item {
@@ -1373,6 +1478,10 @@ footer {
     display: grid;
     grid-template-columns: 1fr;
     gap: 1.5rem;
+}
+
+.detail-section {
+    margin-bottom: 1.5rem;
 }
 
 .detail-section h5 {

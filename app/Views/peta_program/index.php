@@ -14,9 +14,9 @@
                 <label for="filter-tahun">Tahun:</label>
                 <select id="filter-tahun" class="form-control-sm">
                     <option value="">Semua Tahun</option>
-                    <option value="2024">2024</option>
-                    <option value="2025">2025</option>
-                    <option value="2026">2026</option>
+                    <?php foreach ($tahun_list as $tahun): ?>
+                        <option value="<?= $tahun ?>"><?= $tahun ?></option>
+                    <?php endforeach; ?>
                 </select>
             </div>
             
@@ -24,12 +24,9 @@
                 <label for="filter-sektor">Sektor:</label>
                 <select id="filter-sektor" class="form-control-sm">
                     <option value="">Semua Sektor</option>
-                    <option value="jalan">Jalan dan Transportasi</option>
-                    <option value="irigasi">Irigasi dan Pengairan</option>
-                    <option value="pendidikan">Pendidikan</option>
-                    <option value="kesehatan">Kesehatan</option>
-                    <option value="ekonomi">Ekonomi dan Perdagangan</option>
-                    <option value="sosial">Sosial dan Budaya</option>
+                    <?php foreach ($sektor_list as $sektor): ?>
+                        <option value="<?= $sektor['id'] ?>"><?= $sektor['nama_sektor'] ?></option>
+                    <?php endforeach; ?>
                 </select>
             </div>
             
@@ -47,11 +44,9 @@
                 <label for="filter-opd">OPD:</label>
                 <select id="filter-opd" class="form-control-sm">
                     <option value="">Semua OPD</option>
-                    <option value="dinas_pupr">Dinas PUPR</option>
-                    <option value="dinas_pendidikan">Dinas Pendidikan</option>
-                    <option value="dinas_kesehatan">Dinas Kesehatan</option>
-                    <option value="dinas_pertanian">Dinas Pertanian</option>
-                    <option value="dinas_perdagangan">Dinas Perdagangan</option>
+                    <?php foreach ($opd_list as $opd): ?>
+                        <option value="<?= $opd['id'] ?>"><?= $opd['nama_singkat'] ?></option>
+                    <?php endforeach; ?>
                 </select>
             </div>
             

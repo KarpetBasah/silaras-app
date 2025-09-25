@@ -115,9 +115,12 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 function initProgramForm() {
+    console.log('Initializing program form...');
+    
     // Format currency input
-    const anggaranInput = document.getElementById('anggaran');
+    const anggaranInput = document.getElementById('anggaran_total');
     if (anggaranInput) {
+        console.log('Anggaran input found:', anggaranInput);
         anggaranInput.addEventListener('input', function(e) {
             let value = e.target.value.replace(/[^\d]/g, '');
             if (value.length > 0) {
@@ -125,16 +128,27 @@ function initProgramForm() {
             }
             e.target.value = value;
         });
+    } else {
+        console.log('Anggaran input not found');
     }
     
     // Location validation
     const btnValidateLocation = document.getElementById('btn-validate-location');
     if (btnValidateLocation) {
+        console.log('Validate location button found:', btnValidateLocation);
         btnValidateLocation.addEventListener('click', validateLocation);
+    } else {
+        console.log('Validate location button not found');
     }
     
     // Map picker
     const btnMapPicker = document.getElementById('btn-map-picker');
+    if (btnMapPicker) {
+        console.log('Map picker button found:', btnMapPicker);
+        btnMapPicker.addEventListener('click', openMapPicker);
+    } else {
+        console.log('Map picker button not found');
+    }
     if (btnMapPicker) {
         btnMapPicker.addEventListener('click', openMapPicker);
     }
@@ -146,7 +160,7 @@ function initProgramForm() {
     const programForm = document.querySelector('.program-form');
     if (programForm) {
         programForm.addEventListener('submit', function(e) {
-            const anggaranInput = document.getElementById('anggaran');
+            const anggaranInput = document.getElementById('anggaran_total');
             if (anggaranInput) {
                 anggaranInput.value = anggaranInput.value.replace(/[^\d]/g, '');
             }
@@ -161,8 +175,11 @@ function initProgramForm() {
 }
 
 function validateLocation() {
-    const lat = document.getElementById('lokasi_lat').value;
-    const lng = document.getElementById('lokasi_lng').value;
+    console.log('Validating location...');
+    const lat = document.getElementById('koordinat_lat').value;
+    const lng = document.getElementById('koordinat_lng').value;
+    
+    console.log('Lat:', lat, 'Lng:', lng);
     
     if (!lat || !lng) {
         showValidationResult('Masukkan koordinat latitude dan longitude terlebih dahulu', false);
@@ -202,33 +219,207 @@ function showValidationResult(message, isValid) {
     validationResult.style.display = 'block';
 }
 
+// Global variables for map picker
+let mapPickerMap = null;
+let mapPickerMarker = null;
+
 function openMapPicker() {
+    console.log('Opening map picker...');
     const modal = document.getElementById('map-modal');
     if (modal) {
+        console.log('Modal found:', modal);
         modal.style.display = 'flex';
         
+        // Clear the map div and prepare for Leaflet map
         const mapDiv = document.getElementById('map-picker');
-        mapDiv.innerHTML = `
-            <div style="text-align: center;">
-                <i class="fas fa-map" style="font-size: 3rem; color: #64748b; margin-bottom: 1rem;"></i>
-                <p>Peta interaktif akan dimuat di sini</p>
-                <p style="font-size: 0.9rem; color: #64748b;">
-                    Integrasi dengan Leaflet.js untuk memilih lokasi secara visual
-                </p>
-                <button type="button" class="btn btn-primary" onclick="simulateLocationPick()">
-                    <i class="fas fa-crosshairs"></i> Simulasi Pilih Lokasi
-                </button>
-            </div>
-        `;
+        mapDiv.innerHTML = '';
+        mapDiv.style.height = '400px';
+        mapDiv.style.background = '#e2e8f0';
+        
+        // Initialize Leaflet map after modal is shown
+        setTimeout(() => {
+            initMapPicker();
+        }, 100);
+    }
+}
+
+function initMapPicker() {
+    console.log('Initializing map picker...');
+    
+    // Check if Leaflet is available
+    if (typeof L === 'undefined') {
+        console.error('Leaflet library not loaded');
+        showMapError('Leaflet library tidak tersedia. Pastikan koneksi internet stabil.');
+        return;
+    }
+    
+    // Get current coordinates if available
+    const currentLat = document.getElementById('koordinat_lat').value || -3.4582;
+    const currentLng = document.getElementById('koordinat_lng').value || 114.8348;
+    
+    try {
+        // Initialize the map
+        mapPickerMap = L.map('map-picker').setView([parseFloat(currentLat), parseFloat(currentLng)], 13);
+        
+        // Add OpenStreetMap tiles
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© <a href="https://www.openstreetmap.org/copyright" target="_blank">OpenStreetMap</a> contributors',
+            maxZoom: 19
+        }).addTo(mapPickerMap);
+        
+        // Add current location marker if coordinates exist
+        if (currentLat && currentLng && currentLat !== '' && currentLng !== '') {
+            mapPickerMarker = L.marker([parseFloat(currentLat), parseFloat(currentLng)], {
+                draggable: true
+            }).addTo(mapPickerMap);
+            
+            // Update coordinate display
+            updateCoordinatesFromMarker({
+                lat: parseFloat(currentLat), 
+                lng: parseFloat(currentLng)
+            });
+            
+            mapPickerMarker.on('dragend', function(e) {
+                updateCoordinatesFromMarker(e.target.getLatLng());
+            });
+        }
+        
+        // Add click event to map
+        mapPickerMap.on('click', function(e) {
+            console.log('Map clicked at:', e.latlng);
+            
+            // Remove existing marker if any
+            if (mapPickerMarker) {
+                mapPickerMap.removeLayer(mapPickerMarker);
+            }
+            
+            // Add new marker at clicked location
+            mapPickerMarker = L.marker(e.latlng, {
+                draggable: true
+            }).addTo(mapPickerMap);
+            
+            // Update coordinates
+            updateCoordinatesFromMarker(e.latlng);
+            
+            // Add drag event to new marker
+            mapPickerMarker.on('dragend', function(e) {
+                updateCoordinatesFromMarker(e.target.getLatLng());
+            });
+        });
+        
+        // Add map controls
+        addMapPickerControls();
+        
+        console.log('Map picker initialized successfully');
+        
+    } catch (error) {
+        console.error('Error initializing map picker:', error);
+        showMapError('Gagal memuat peta. Pastikan koneksi internet tersedia.');
+    }
+}
+
+function showMapError(message) {
+    const mapDiv = document.getElementById('map-picker');
+    mapDiv.innerHTML = `
+        <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; color: #ef4444;">
+            <i class="fas fa-exclamation-triangle" style="font-size: 2rem; margin-bottom: 1rem;"></i>
+            <p style="text-align: center; margin-bottom: 1rem;">${message}</p>
+            <button type="button" class="btn btn-primary" onclick="simulateLocationPick()" style="margin-top: 0.5rem;">
+                <i class="fas fa-map-pin"></i> Gunakan Lokasi Default Banjarbaru
+            </button>
+        </div>
+    `;
+}
+
+function addMapPickerControls() {
+    // Add locate control (find user's current location)
+    const locateControl = L.control({position: 'topleft'});
+    locateControl.onAdd = function() {
+        const div = L.DomUtil.create('div', 'leaflet-bar leaflet-control leaflet-control-custom');
+        div.style.backgroundColor = 'white';
+        div.style.backgroundImage = 'none';
+        div.style.width = '30px';
+        div.style.height = '30px';
+        div.style.cursor = 'pointer';
+        div.title = 'Gunakan Lokasi Saya';
+        div.innerHTML = '<i class="fas fa-crosshairs" style="line-height: 30px; margin-left: 8px; color: #333;"></i>';
+        
+        div.onclick = function() {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(function(position) {
+                    const lat = position.coords.latitude;
+                    const lng = position.coords.longitude;
+                    
+                    // Pan map to user location
+                    mapPickerMap.setView([lat, lng], 15);
+                    
+                    // Remove existing marker
+                    if (mapPickerMarker) {
+                        mapPickerMap.removeLayer(mapPickerMarker);
+                    }
+                    
+                    // Add marker at user location
+                    mapPickerMarker = L.marker([lat, lng], {
+                        draggable: true
+                    }).addTo(mapPickerMap);
+                    
+                    updateCoordinatesFromMarker({lat: lat, lng: lng});
+                    
+                    mapPickerMarker.on('dragend', function(e) {
+                        updateCoordinatesFromMarker(e.target.getLatLng());
+                    });
+                }, function(error) {
+                    console.error('Geolocation error:', error);
+                    alert('Tidak dapat mengakses lokasi Anda. Pastikan GPS aktif dan berikan izin lokasi.');
+                });
+            } else {
+                alert('Browser Anda tidak mendukung geolocation.');
+            }
+        };
+        
+        return div;
+    };
+    locateControl.addTo(mapPickerMap);
+}
+
+function updateCoordinatesFromMarker(latlng) {
+    console.log('Updating coordinates:', latlng);
+    // Update the display coordinates (temporary, will be set to form when confirmed)
+    const coordDisplay = document.getElementById('temp-coordinates');
+    if (coordDisplay) {
+        coordDisplay.innerHTML = `Lat: ${latlng.lat.toFixed(6)}, Lng: ${latlng.lng.toFixed(6)}`;
+    }
+    
+    // Store coordinates temporarily
+    window.tempCoordinates = {
+        lat: latlng.lat.toFixed(6),
+        lng: latlng.lng.toFixed(6)
+    };
+}
+
+function confirmLocationSelection() {
+    if (window.tempCoordinates) {
+        document.getElementById('koordinat_lat').value = window.tempCoordinates.lat;
+        document.getElementById('koordinat_lng').value = window.tempCoordinates.lng;
+        
+        closeModal('map-modal');
+        
+        // Auto validate after selection
+        setTimeout(() => {
+            validateLocation();
+        }, 500);
+    } else {
+        alert('Silakan pilih lokasi di peta terlebih dahulu');
     }
 }
 
 function simulateLocationPick() {
+    // Fallback function when map fails to load
     const lat = -3.4582 + (Math.random() - 0.5) * 0.1;
     const lng = 114.8348 + (Math.random() - 0.5) * 0.1;
     
-    document.getElementById('lokasi_lat').value = lat.toFixed(6);
-    document.getElementById('lokasi_lng').value = lng.toFixed(6);
+    document.getElementById('koordinat_lat').value = lat.toFixed(6);
+    document.getElementById('koordinat_lng').value = lng.toFixed(6);
     
     closeModal('map-modal');
     
@@ -240,7 +431,8 @@ function simulateLocationPick() {
 function initModals() {
     document.addEventListener('click', function(e) {
         if (e.target.classList.contains('modal')) {
-            e.target.style.display = 'none';
+            const modalId = e.target.getAttribute('id');
+            closeModal(modalId);
         }
     });
     
@@ -248,7 +440,8 @@ function initModals() {
         btn.addEventListener('click', function() {
             const modal = this.closest('.modal');
             if (modal) {
-                modal.style.display = 'none';
+                const modalId = modal.getAttribute('id');
+                closeModal(modalId);
             }
         });
     });
@@ -257,7 +450,8 @@ function initModals() {
         if (e.key === 'Escape') {
             const visibleModal = document.querySelector('.modal[style*="flex"]');
             if (visibleModal) {
-                visibleModal.style.display = 'none';
+                const modalId = visibleModal.getAttribute('id');
+                closeModal(modalId);
             }
         }
     });
@@ -267,6 +461,18 @@ function closeModal(modalId) {
     const modal = document.getElementById(modalId);
     if (modal) {
         modal.style.display = 'none';
+        
+        // Clean up map picker when modal is closed
+        if (modalId === 'map-modal' && mapPickerMap) {
+            try {
+                mapPickerMap.remove();
+                mapPickerMap = null;
+                mapPickerMarker = null;
+                window.tempCoordinates = null;
+            } catch (e) {
+                console.log('Error cleaning up map:', e);
+            }
+        }
     }
 }
 
@@ -404,27 +610,18 @@ function displayProgramMarkers(programs) {
 }
 
 function createProgramMarker(program) {
-    // Determine marker color based on status
+    // Determine marker color based on status (matching CSS colors)
     const statusColors = {
         'perencanaan': '#f59e0b',
-        'berjalan': '#3b82f6',
+        'berjalan': '#3b82f6', 
         'selesai': '#10b981'
     };
     
-    // Determine icon based on sector
-    const sectorIcons = {
-        'jalan': 'road',
-        'irigasi': 'tint',
-        'pendidikan': 'graduation-cap',
-        'kesehatan': 'heartbeat',
-        'ekonomi': 'store',
-        'sosial': 'users'
-    };
-    
+    // Use status color as primary color
     const color = statusColors[program.status] || '#64748b';
-    const iconName = sectorIcons[program.sektor] || 'map-pin';
+    const iconName = program.sektor && program.sektor.icon ? program.sektor.icon.replace('fas fa-', '') : 'map-pin';
     
-    // Create custom icon
+    // Create custom icon using status color
     const customIcon = L.divIcon({
         className: 'custom-marker',
         html: `<div style="background-color: ${color}; width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center; border: 3px solid white; box-shadow: 0 2px 10px rgba(0,0,0,0.3);"><i class="fas fa-${iconName}" style="color: white; font-size: 12px;"></i></div>`,
@@ -435,16 +632,16 @@ function createProgramMarker(program) {
     // Create marker
     const marker = L.marker([program.lat, program.lng], { icon: customIcon });
     
-    // Create popup content
+    // Create popup content with correct data structure
     const popupContent = `
         <div class="program-popup">
             <h4>${program.nama_kegiatan}</h4>
             <div class="popup-details">
-                <p><strong>Sektor:</strong> ${getSektorName(program.sektor)}</p>
+                <p><strong>Sektor:</strong> ${program.sektor ? program.sektor.nama : 'N/A'}</p>
                 <p><strong>Status:</strong> <span class="status-badge status-${program.status}">${getStatusName(program.status)}</span></p>
-                <p><strong>Anggaran:</strong> ${formatCurrency(program.anggaran)}</p>
-                <p><strong>Tahun:</strong> ${program.tahun}</p>
-                <p><strong>OPD:</strong> ${program.opd}</p>
+                <p><strong>Anggaran:</strong> ${formatCurrency(program.anggaran_total)}</p>
+                <p><strong>Tahun:</strong> ${program.tahun_pelaksanaan}</p>
+                <p><strong>OPD:</strong> ${program.opd ? program.opd.singkat : 'N/A'}</p>
             </div>
             <button onclick="showProgramDetail(${program.id})" class="btn btn-primary btn-sm">
                 <i class="fas fa-info-circle"></i> Detail
@@ -482,15 +679,28 @@ function applyFilters() {
     const status = document.getElementById('filter-status').value;
     const opd = document.getElementById('filter-opd').value;
     
-    filteredPrograms = allPrograms.filter(program => {
-        return (!tahun || program.tahun.toString() === tahun) &&
-               (!sektor || program.sektor === sektor) &&
-               (!status || program.status === status) &&
-               (!opd || program.opd.toLowerCase().includes(opd.replace('_', ' ')));
-    });
+    // Reload data with filters via API
+    const params = new URLSearchParams();
+    if (tahun) params.append('tahun', tahun);
+    if (sektor) params.append('sektor_id', sektor);
+    if (status) params.append('status', status);
+    if (opd) params.append('opd_id', opd);
     
-    displayProgramMarkers(filteredPrograms);
-    updateStatistics(filteredPrograms);
+    const url = '/peta-program/getProgramData' + (params.toString() ? '?' + params.toString() : '');
+    
+    fetch(url)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                filteredPrograms = data.data;
+                displayProgramMarkers(filteredPrograms);
+                updateStatistics(filteredPrograms);
+            }
+        })
+        .catch(error => {
+            console.error('Error loading filtered program data:', error);
+            GeoSelaras.showNotification('Gagal memuat data program', 'error');
+        });
 }
 
 function resetFilters() {
@@ -539,47 +749,91 @@ function displayProgramDetail(program) {
     
     title.textContent = program.nama_kegiatan;
     
+    // Calculate budget realization percentage
+    const realisasiPersen = program.anggaran_total > 0 ? 
+        ((program.anggaran_realisasi / program.anggaran_total) * 100).toFixed(1) : 0;
+    
     content.innerHTML = `
         <div class="program-detail-grid">
             <div class="detail-section">
                 <h5><i class="fas fa-info-circle"></i> Informasi Umum</h5>
                 <table class="detail-table">
+                    <tr><td>Kode Program</td><td>${program.kode_program || 'N/A'}</td></tr>
                     <tr><td>Nama Kegiatan</td><td>${program.nama_kegiatan}</td></tr>
-                    <tr><td>Deskripsi</td><td>${program.deskripsi}</td></tr>
-                    <tr><td>Lokasi</td><td>${program.lokasi}</td></tr>
-                    <tr><td>Koordinat</td><td>${program.koordinat[0]}, ${program.koordinat[1]}</td></tr>
+                    <tr><td>Deskripsi</td><td>${program.deskripsi || 'N/A'}</td></tr>
+                    <tr><td>Lokasi</td><td>${program.lokasi_alamat || 'N/A'}</td></tr>
+                    <tr><td>Koordinat</td><td>${program.koordinat.lat}, ${program.koordinat.lng}</td></tr>
                 </table>
             </div>
             
             <div class="detail-section">
                 <h5><i class="fas fa-tags"></i> Kategorisasi</h5>
                 <table class="detail-table">
-                    <tr><td>Sektor</td><td>${getSektorName(program.sektor)}</td></tr>
+                    <tr><td>Sektor</td><td>${program.sektor.nama}</td></tr>
                     <tr><td>Status</td><td><span class="status-badge status-${program.status}">${getStatusName(program.status)}</span></td></tr>
-                    <tr><td>OPD Pelaksana</td><td>${program.opd}</td></tr>
-                    <tr><td>Sasaran RPJMD</td><td>${program.sasaran_rpjmd}</td></tr>
+                    <tr><td>OPD Pelaksana</td><td>${program.opd.nama}</td></tr>
+                    <tr><td>Kepala OPD</td><td>${program.opd.kepala || 'N/A'}</td></tr>
+                    <tr><td>Sasaran RPJMD</td><td>${program.rpjmd.nama}</td></tr>
                 </table>
             </div>
             
             <div class="detail-section">
                 <h5><i class="fas fa-money-bill-wave"></i> Anggaran & Progress</h5>
                 <table class="detail-table">
-                    <tr><td>Anggaran</td><td>${formatCurrency(program.anggaran)}</td></tr>
+                    <tr><td>Anggaran Total</td><td>${formatCurrency(program.anggaran_total)}</td></tr>
+                    <tr><td>Realisasi Anggaran</td><td>${formatCurrency(program.anggaran_realisasi)}</td></tr>
                     <tr><td>Tahun Pelaksanaan</td><td>${program.tahun_pelaksanaan}</td></tr>
                     <tr><td>Progress Fisik</td><td>
                         <div class="progress-bar">
-                            <div class="progress-fill" style="width: ${program.progress_fisik}%"></div>
+                            <div class="progress-fill" style="width: ${program.progress_fisik}%; background-color: #10b981;"></div>
                             <span class="progress-text">${program.progress_fisik}%</span>
                         </div>
                     </td></tr>
                     <tr><td>Realisasi Anggaran</td><td>
                         <div class="progress-bar">
-                            <div class="progress-fill" style="width: ${program.realisasi_anggaran}%"></div>
-                            <span class="progress-text">${program.realisasi_anggaran}%</span>
+                            <div class="progress-fill" style="width: ${realisasiPersen}%; background-color: #3b82f6;"></div>
+                            <span class="progress-text">${realisasiPersen}%</span>
                         </div>
                     </td></tr>
                 </table>
             </div>
+            
+            ${program.kontraktor || program.konsultan || program.sumber_dana ? `
+            <div class="detail-section">
+                <h5><i class="fas fa-handshake"></i> Pelaksanaan</h5>
+                <table class="detail-table">
+                    ${program.kontraktor ? `<tr><td>Kontraktor</td><td>${program.kontraktor}</td></tr>` : ''}
+                    ${program.konsultan ? `<tr><td>Konsultan</td><td>${program.konsultan}</td></tr>` : ''}
+                    ${program.sumber_dana ? `<tr><td>Sumber Dana</td><td>${program.sumber_dana}</td></tr>` : ''}
+                    ${program.tanggal_mulai ? `<tr><td>Tanggal Mulai</td><td>${formatDate(program.tanggal_mulai)}</td></tr>` : ''}
+                    ${program.tanggal_selesai_rencana ? `<tr><td>Target Selesai</td><td>${formatDate(program.tanggal_selesai_rencana)}</td></tr>` : ''}
+                    ${program.tanggal_selesai_aktual ? `<tr><td>Selesai Aktual</td><td>${formatDate(program.tanggal_selesai_aktual)}</td></tr>` : ''}
+                    <tr><td>Prioritas</td><td>${program.is_prioritas ? '<span class="priority-badge">Prioritas</span>' : 'Reguler'}</td></tr>
+                </table>
+            </div>
+            ` : ''}
+            
+            ${program.documents && program.documents.length > 0 ? `
+            <div class="detail-section">
+                <h5><i class="fas fa-paperclip"></i> Dokumen</h5>
+                <div class="documents-list">
+                    ${program.documents.map(doc => `
+                        <div class="document-item">
+                            <i class="fas fa-file"></i>
+                            <span>${doc.nama_dokumen}</span>
+                            <small>(${doc.jenis_dokumen})</small>
+                        </div>
+                    `).join('')}
+                </div>
+            </div>
+            ` : ''}
+            
+            ${program.catatan ? `
+            <div class="detail-section">
+                <h5><i class="fas fa-sticky-note"></i> Catatan</h5>
+                <p class="program-notes">${program.catatan}</p>
+            </div>
+            ` : ''}
         </div>
     `;
     
@@ -605,6 +859,16 @@ function getStatusName(status) {
         'selesai': 'Selesai'
     };
     return names[status] || status;
+}
+
+function formatDate(dateString) {
+    if (!dateString) return 'N/A';
+    const date = new Date(dateString);
+    return date.toLocaleDateString('id-ID', { 
+        year: 'numeric', 
+        month: 'long', 
+        day: 'numeric' 
+    });
 }
 
 function formatCurrency(amount) {
