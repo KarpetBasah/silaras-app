@@ -23,9 +23,18 @@ $routes->group('peta-program', static function ($routes) {
     $routes->get('', 'PetaProgram::index');
     $routes->get('getProgramData', 'PetaProgram::getProgramData');
     $routes->get('getProgramDetail/(:num)', 'PetaProgram::getProgramDetail/$1');
+    $routes->group('api', static function ($routes) {
+        $routes->get('programs', 'PetaProgram::getProgramData');
+    });
 });
 
-// Placeholder routes for other modules
-$routes->get('rpjmd', 'RPJMD::index');
+// RPJMD Routes
+$routes->group('rpjmd', static function ($routes) {
+    $routes->get('', 'RPJMD::index');
+    $routes->group('api', static function ($routes) {
+        $routes->get('priority-layers', 'RPJMD::getPriorityLayers');
+        $routes->get('alignment-analysis', 'RPJMD::getAlignmentAnalysis');
+    });
+});
 $routes->get('analisis', 'Analisis::index');
 $routes->get('monitoring', 'Monitoring::index');

@@ -78,7 +78,7 @@ class ProgramModel extends Model
                                  rpjmd_sasaran.nama_sasaran as rpjmd_nama')
                        ->join('opd', 'opd.id = program.opd_id')
                        ->join('sektor', 'sektor.id = program.sektor_id') 
-                       ->join('rpjmd_sasaran', 'rpjmd_sasaran.id = program.rpjmd_sasaran_id');
+                       ->join('rpjmd_sasaran', 'rpjmd_sasaran.id = program.rpjmd_sasaran_id', 'left');
 
         // Apply filters
         if (!empty($filters['sektor_id'])) {
