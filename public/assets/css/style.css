@@ -1,19 +1,23 @@
 /* SiLaras - Sistem Perencanaan Berbasis Geospasial */
-/* Main Stylesheet .nav-container {
-    max-width: 1200px;
-    margin: 0 auto;
-    padding: 0 1.5rem;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    height: 70px;
-    gap: 2rem;
-}ot {
-    --primary-color: #2563eb;
-    --primary-dark: #1d4ed8;
-    --secondary-color: #64748b;
-    --accent-color: #10b981;
-    --danger-color: /* Content Styles */
+/* Main Stylesheet */
+
+/* CSS Variables */
+:root {
+    --primary-color: #1e40af;
+    --secondary-color: #f3f4f6;
+    --accent-color: #06b6d4;
+    --success-color: #10b981;
+    --warning-color: #f59e0b;
+    --light-bg: #f8fafc;
+    --white: #ffffff;
+    --text-dark: #1e293b;
+    --text-light: #64748b;
+    --border-color: #e2e8f0;
+    --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+}
+
+/* Content Styles */
 .content {
     max-width: 1200px;
     margin: 2rem auto;
@@ -38,22 +42,6 @@
         padding: 0 0.75rem;
         margin: 1rem auto;
     }
-}
-
-/* CSS Variables */
-:root {
-    --primary-color: #1e40af;
-    --secondary-color: #f3f4f6;
-    --accent-color: #06b6d4;
-    --success-color: #10b981;
-    --warning-color: #f59e0b;
-    --light-bg: #f8fafc;
-    --white: #ffffff;
-    --text-dark: #1e293b;
-    --text-light: #64748b;
-    --border-color: #e2e8f0;
-    --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
 }
 
 * {
@@ -728,8 +716,10 @@ footer {
 }
 
 .btn:hover {
-    background: var(--primary-dark);
+    background: transparent;
+    color: var(--primary-color);
     transform: translateY(-1px);
+    outline: 2px solid var(--primary-color);
 }
 
 .btn i {

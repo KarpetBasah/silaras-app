@@ -73,25 +73,19 @@ class RPJMD extends BaseController
     public function getPriorityLayers()
     {
         try {
-            // Get strategic areas and thematic zones from database
-            $strategicAreas = $this->priorityZoneModel->getStrategicAreas();
-            $thematicZones = $this->priorityZoneModel->getThematicZones();
+            // Get all priority zones from database  
+            $zones = $this->priorityZoneModel->findAll();
             
-            // Format coordinates for each area/zone
-            foreach ($strategicAreas as &$area) {
-                $area['coordinates'] = json_decode($area['coordinates'], true);
-            }
-            
-            foreach ($thematicZones as &$zone) {
-                $zone['coordinates'] = json_decode($zone['coordinates'], true);
+            // Format coordinates for each zone
+            foreach ($zones as &$zone) {
+                if (is_string($zone['coordinates'])) {
+                    $zone['coordinates'] = json_decode($zone['coordinates'], true);
+                }
             }
             
             return $this->response->setJSON([
                 'status' => 'success',
-                'data' => [
-                    'strategicAreas' => $strategicAreas,
-                    'thematicZones' => $thematicZones
-                ]
+                'data' => $zones
             ]);
             
         } catch (\Exception $e) {

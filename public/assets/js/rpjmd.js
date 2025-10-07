@@ -17,7 +17,7 @@ function initRPJMDMap() {
     
     // Create map
     rpjmdMap = L.map('rpjmd-map', {
-        center: [-3.4582, 114.8348], 
+        center: [-3.4582, 114.8348], // Banjarbaru coordinates (Kalimantan Selatan)
         zoom: 12,
         zoomControl: true
     });
@@ -55,20 +55,6 @@ function initRPJMDMap() {
 
 // Initialize layer toggle controls
 function initLayerControls() {
-    const layerToggles = document.querySelectorAll('.layer-toggle input[type="checkbox"]');
-    
-    layerToggles.forEach(toggle => {
-        toggle.addEventListener('change', function() {
-            const layerId = this.getAttribute('data-layer');
-            
-            if (this.checked) {
-                showPriorityLayer(layerId);
-            } else {
-                hidePriorityLayer(layerId);
-            }
-        });
-    });
-    
     // Filter controls
     const filterInputs = document.querySelectorAll('.filter-group select, .filter-group input');
     filterInputs.forEach(input => {
@@ -79,6 +65,94 @@ function initLayerControls() {
     const analyzeBtn = document.getElementById('analyze-alignment');
     if (analyzeBtn) {
         analyzeBtn.addEventListener('click', performAlignment);
+    }
+    
+    // We'll set up layer toggles after loading priority layers
+}
+
+// Setup layer toggles dynamically based on loaded data
+function setupLayerToggles() {
+    // Strategic areas toggles
+    Object.keys(priorityLayers).forEach(layerId => {
+        const layer = priorityLayers[layerId];
+        if (layer.type === 'strategic') {
+            const checkbox = document.getElementById(`layer-strategic-${layer.data.id}`);
+            if (checkbox) {
+                checkbox.addEventListener('change', function() {
+                    if (this.checked) {
+                        showPriorityLayer(layerId);
+                    } else {
+                        hidePriorityLayer(layerId);
+                    }
+                });
+                
+                // Show layer by default
+                showPriorityLayer(layerId);
+                checkbox.checked = true;
+            }
+        } else if (layer.type === 'thematic') {
+            const checkbox = document.getElementById(`layer-thematic-${layer.data.id}`);
+            if (checkbox) {
+                checkbox.addEventListener('change', function() {
+                    if (this.checked) {
+                        showPriorityLayer(layerId);
+                    } else {
+                        hidePriorityLayer(layerId);
+                    }
+                });
+                
+                // Show layer by default
+                showPriorityLayer(layerId);
+                checkbox.checked = true;
+            }
+        }
+    });
+    
+    // Setup "Show All" toggles
+    setupShowAllToggles();
+}
+
+// Setup show all toggles
+function setupShowAllToggles() {
+    const strategicAllToggle = document.getElementById('layer-strategic-all');
+    const thematicAllToggle = document.getElementById('layer-thematic-all');
+    
+    if (strategicAllToggle) {
+        strategicAllToggle.addEventListener('change', function() {
+            Object.keys(priorityLayers).forEach(layerId => {
+                const layer = priorityLayers[layerId];
+                if (layer.type === 'strategic') {
+                    const checkbox = document.getElementById(`layer-strategic-${layer.data.id}`);
+                    if (checkbox) {
+                        checkbox.checked = this.checked;
+                        if (this.checked) {
+                            showPriorityLayer(layerId);
+                        } else {
+                            hidePriorityLayer(layerId);
+                        }
+                    }
+                }
+            });
+        });
+    }
+    
+    if (thematicAllToggle) {
+        thematicAllToggle.addEventListener('change', function() {
+            Object.keys(priorityLayers).forEach(layerId => {
+                const layer = priorityLayers[layerId];
+                if (layer.type === 'thematic') {
+                    const checkbox = document.getElementById(`layer-thematic-${layer.data.id}`);
+                    if (checkbox) {
+                        checkbox.checked = this.checked;
+                        if (this.checked) {
+                            showPriorityLayer(layerId);
+                        } else {
+                            hidePriorityLayer(layerId);
+                        }
+                    }
+                }
+            });
+        });
     }
 }
 
@@ -113,28 +187,49 @@ async function loadPriorityLayers() {
         const data = await response.json();
         console.log('Priority layers response:', data);
         
-        if (data.status === 'success') {
+        if (data.status === 'success' && data.data && data.data.length > 0) {
             // Clear existing layers
             priorityLayers = {};
             
-            // Add strategic areas
-            if (data.data.strategicAreas) {
-                data.data.strategicAreas.forEach(area => {
-                    addStrategicAreaLayer(area);
-                });
-            }
+            // Process the data directly since API returns flat array
+            const zones = data.data;
+            console.log('Processing zones:', zones.length);
             
-            // Add thematic zones
-            if (data.data.thematicZones) {
-                data.data.thematicZones.forEach(zone => {
-                    addThematicZoneLayer(zone);
-                });
-            }
+            // Group zones by type
+            const strategicAreas = zones.filter(zone => zone.type === 'strategic');
+            const thematicZones = zones.filter(zone => zone.type === 'thematic');
             
-            console.log('Priority layers loaded:', Object.keys(priorityLayers).length);
+            console.log('Strategic areas:', strategicAreas.length);
+            console.log('Thematic zones:', thematicZones.length);
+            
+            // Create layer toggles in the UI
+            if (strategicAreas.length > 0 || thematicZones.length > 0) {
+                createLayerToggles(strategicAreas, thematicZones);
+                
+                // Add strategic areas
+                strategicAreas.forEach((area, index) => {
+                    addStrategicAreaLayerFromData(area, index);
+                });
+                
+                // Add thematic zones
+                thematicZones.forEach((zone, index) => {
+                    addThematicZoneLayerFromData(zone, index);
+                });
+                
+                // Setup layer toggle controls after layers are created
+                setTimeout(() => {
+                    setupLayerToggles();
+                }, 100);
+                
+                console.log('Priority layers loaded successfully:', Object.keys(priorityLayers).length);
+                showMessage('Layer prioritas berhasil dimuat (' + Object.keys(priorityLayers).length + ' layer)', 'success');
+            } else {
+                console.warn('No priority zones found in data');
+                showMessage('Tidak ada data zona prioritas yang tersedia', 'warning');
+            }
         } else {
-            console.error('Failed to load priority layers:', data.message);
-            showError('Gagal memuat data layer prioritas: ' + (data.message || 'Unknown error'));
+            console.error('Failed to load priority layers:', data.message || 'No data returned');
+            showError('Gagal memuat data layer prioritas: ' + (data.message || 'Data tidak tersedia'));
         }
     } catch (error) {
         console.error('Error loading priority layers:', error);
@@ -142,70 +237,193 @@ async function loadPriorityLayers() {
     }
 }
 
-// Add strategic area layer
-function addStrategicAreaLayer(area) {
-    const layerId = `strategic-${area.id}`;
+// Create layer toggles in UI
+function createLayerToggles(strategicAreas, thematicZones) {
+    // Create strategic area toggles
+    const strategicContainer = document.getElementById('strategic-layers-list');
+    if (strategicContainer) {
+        let strategicHtml = '';
+        strategicAreas.forEach((area, index) => {
+            const color = getStrategicColor(index);
+            strategicHtml += `
+                <label class="layer-toggle">
+                    <input class="form-check-input" type="checkbox" 
+                           id="layer-strategic-${area.id}" checked>
+                    <span class="toggle-indicator" style="background-color: ${color};"></span>
+                    <span class="toggle-text">${area.name}</span>
+                </label>
+            `;
+        });
+        strategicContainer.innerHTML = strategicHtml;
+    }
     
-    // Create polygon from coordinates
-    const polygon = L.polygon(area.coordinates, {
-        color: area.color || '#2563eb',
-        fillColor: area.color || '#2563eb',
-        fillOpacity: 0.2,
-        weight: 2
-    });
-    
-    // Add popup
-    polygon.bindPopup(`
-        <div class="rpjmd-popup">
-            <h4>${area.name}</h4>
-            <p><strong>Tipe:</strong> Kawasan Strategis</p>
-            <p><strong>Deskripsi:</strong> ${area.description || 'Tidak ada deskripsi'}</p>
-            <p><strong>Prioritas:</strong> ${area.priority || 'Sedang'}</p>
-        </div>
-    `);
-    
-    // Store layer
-    priorityLayers[layerId] = {
-        layer: polygon,
-        type: 'strategic',
-        data: area,
-        visible: false
-    };
+    // Create thematic zone toggles
+    const thematicContainer = document.getElementById('thematic-layers-list');
+    if (thematicContainer) {
+        let thematicHtml = '';
+        thematicZones.forEach((zone, index) => {
+            const color = getThematicColor(index);
+            thematicHtml += `
+                <label class="layer-toggle">
+                    <input class="form-check-input" type="checkbox" 
+                           id="layer-thematic-${zone.id}" checked>
+                    <span class="toggle-indicator" style="background-color: ${color};"></span>
+                    <span class="toggle-text">${zone.name}</span>
+                </label>
+            `;
+        });
+        thematicContainer.innerHTML = thematicHtml;
+    }
 }
 
-// Add thematic zone layer
-function addThematicZoneLayer(zone) {
+// Add strategic area layer from API data
+function addStrategicAreaLayerFromData(area, index) {
+    const layerId = `strategic-${area.id}`;
+    
+    try {
+        // Parse coordinates
+        let coordinates;
+        if (typeof area.coordinates === 'string') {
+            coordinates = JSON.parse(area.coordinates);
+        } else {
+            coordinates = area.coordinates;
+        }
+        
+        // Get color for strategic area
+        const color = getStrategicColor(index);
+        
+        // Create polygon from coordinates
+        const polygon = L.polygon(coordinates, {
+            color: color,
+            fillColor: color,
+            fillOpacity: 0.3,
+            weight: 2,
+            opacity: 0.8
+        });
+        
+        // Add popup
+        polygon.bindPopup(`
+            <div class="rpjmd-popup">
+                <h4>${area.name}</h4>
+                <p><strong>Tipe:</strong> Kawasan Strategis</p>
+                <p><strong>Prioritas:</strong> ${area.priority || 'Sedang'}</p>
+                <p><strong>Deskripsi:</strong> ${area.description || 'Tidak ada deskripsi'}</p>
+            </div>
+        `);
+        
+        // Store layer
+        priorityLayers[layerId] = {
+            layer: polygon,
+            type: 'strategic',
+            data: area,
+            visible: true
+        };
+        
+        // Add to map by default
+        polygon.addTo(rpjmdMap);
+        
+        console.log(`Strategic area layer added: ${layerId}`);
+        
+    } catch (error) {
+        console.error('Error creating strategic area layer:', area, error);
+    }
+}
+
+// Add thematic zone layer from API data
+function addThematicZoneLayerFromData(zone, index) {
     const layerId = `thematic-${zone.id}`;
     
-    // Create polygon from coordinates
-    const polygon = L.polygon(zone.coordinates, {
-        color: zone.color || '#dc2626',
-        fillColor: zone.color || '#dc2626',
-        fillOpacity: 0.15,
-        weight: 2,
-        dashArray: '5, 5'
-    });
-    
-    // Add popup
-    polygon.bindPopup(`
-        <div class="rpjmd-popup">
-            <h4>${zone.name}</h4>
-            <p><strong>Tipe:</strong> Zona Tematik</p>
-            <p><strong>Tema:</strong> ${zone.theme || 'Tidak ada tema'}</p>
-            <p><strong>Deskripsi:</strong> ${zone.description || 'Tidak ada deskripsi'}</p>
-        </div>
-    `);
-    
-    // Store layer
-    priorityLayers[layerId] = {
-        layer: polygon,
-        type: 'thematic',
-        data: zone,
-        visible: false
-    };
+    try {
+        // Parse coordinates
+        let coordinates;
+        if (typeof zone.coordinates === 'string') {
+            coordinates = JSON.parse(zone.coordinates);
+        } else {
+            coordinates = zone.coordinates;
+        }
+        
+        // Get color for thematic zone
+        const color = getThematicColor(index);
+        
+        // Create polygon from coordinates
+        const polygon = L.polygon(coordinates, {
+            color: color,
+            fillColor: color,
+            fillOpacity: 0.3,
+            weight: 2,
+            opacity: 0.8
+        });
+        
+        // Add popup
+        polygon.bindPopup(`
+            <div class="rpjmd-popup">
+                <h4>${zone.name}</h4>
+                <p><strong>Tipe:</strong> Zona Tematik</p>
+                <p><strong>Prioritas:</strong> ${zone.priority || 'Sedang'}</p>
+                <p><strong>Deskripsi:</strong> ${zone.description || 'Tidak ada deskripsi'}</p>
+            </div>
+        `);
+        
+        // Store layer
+        priorityLayers[layerId] = {
+            layer: polygon,
+            type: 'thematic',
+            data: zone,
+            visible: true
+        };
+        
+        // Add to map by default
+        polygon.addTo(rpjmdMap);
+        
+        console.log(`Thematic zone layer added: ${layerId}`);
+        
+    } catch (error) {
+        console.error('Error creating thematic zone layer:', zone, error);
+    }
+}
+
+// Get color for strategic areas
+function getStrategicColor(index) {
+    const colors = ['#ff6b35', '#e74c3c', '#c0392b', '#a93226', '#922b21'];
+    return colors[index % colors.length];
+}
+
+// Get color for thematic zones
+function getThematicColor(index) {
+    const colors = ['#4ecdc4', '#16a085', '#1abc9c', '#17a2b8', '#138496'];
+    return colors[index % colors.length];
 }
 
 // Show priority layer
+function showPriorityLayer(layerId) {
+    if (priorityLayers[layerId] && !priorityLayers[layerId].visible) {
+        const layer = priorityLayers[layerId].layer;
+        layer.addTo(rpjmdMap);
+        priorityLayers[layerId].visible = true;
+        console.log(`Layer shown: ${layerId}`);
+    }
+}
+
+// Hide priority layer
+function hidePriorityLayer(layerId) {
+    if (priorityLayers[layerId] && priorityLayers[layerId].visible) {
+        const layer = priorityLayers[layerId].layer;
+        rpjmdMap.removeLayer(layer);
+        priorityLayers[layerId].visible = false;
+        console.log(`Layer hidden: ${layerId}`);
+    }
+}
+
+// Clear all priority layers
+function clearPriorityLayers() {
+    Object.keys(priorityLayers).forEach(layerId => {
+        if (priorityLayers[layerId].visible) {
+            rpjmdMap.removeLayer(priorityLayers[layerId].layer);
+        }
+    });
+    priorityLayers = {};
+    console.log('All priority layers cleared');
+}
 function showPriorityLayer(layerId) {
     if (priorityLayers[layerId] && !priorityLayers[layerId].visible) {
         priorityLayers[layerId].layer.addTo(rpjmdMap);
@@ -349,28 +567,46 @@ function applyFilters() {
     const opdId = document.getElementById('filter-opd-rpjmd')?.value;
     const status = document.getElementById('filter-status-rpjmd')?.value;
     
-    // Filter programs
-    const filteredPrograms = currentPrograms.filter(program => {
-        let match = true;
+    // Reload programs with filters
+    loadProgramsWithFilters(sektorId, opdId, status);
+}
+
+// Load programs with filters
+async function loadProgramsWithFilters(sektorId = '', opdId = '', status = '') {
+    try {
+        let url = '/peta-program/api/programs?';
+        const params = [];
         
-        if (sektorId && sektorId !== 'all') {
-            match = match && program.sektor_id == sektorId;
+        if (sektorId && sektorId !== '') params.push(`sektor_id=${sektorId}`);
+        if (opdId && opdId !== '') params.push(`opd_id=${opdId}`);
+        if (status && status !== '') params.push(`status=${status}`);
+        
+        if (params.length > 0) {
+            url += params.join('&');
         }
         
-        if (opdId && opdId !== 'all') {
-            match = match && program.opd_id == opdId;
+        console.log('Loading filtered programs:', url);
+        const response = await fetch(url);
+        
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
         }
         
-        if (status && status !== 'all') {
-            match = match && program.status.toLowerCase() === status.toLowerCase();
-        }
+        const data = await response.json();
+        console.log('Filtered programs response:', data);
         
-        return match;
-    });
-    
-    // Update display
-    currentPrograms = filteredPrograms;
-    displayPrograms();
+        if (data.success === true) {
+            currentPrograms = data.data || [];
+            displayPrograms();
+            console.log('Filtered programs loaded:', currentPrograms.length);
+        } else {
+            console.error('Failed to load filtered programs:', data.message);
+            showError('Gagal memuat data program dengan filter');
+        }
+    } catch (error) {
+        console.error('Error loading filtered programs:', error);
+        showError('Error saat memuat data program dengan filter');
+    }
 }
 
 // Perform alignment analysis
@@ -518,8 +754,31 @@ function formatRupiah(amount) {
 
 // Show error message
 function showError(message) {
+    console.error('RPJMD Error:', message);
     // You can customize this to use your preferred notification system
-    alert(message);
+    alert('Error: ' + message);
+}
+
+// Show success/info message
+function showMessage(message, type = 'info') {
+    console.log('RPJMD Message (' + type + '):', message);
+    // You can customize this to use your preferred notification system
+    if (type === 'success') {
+        console.log('✅ ' + message);
+    } else if (type === 'warning') {
+        console.warn('⚠️ ' + message);
+    } else {
+        console.info('ℹ️ ' + message);
+    }
+}
+
+// Show/hide loading indicator
+function showLoading() {
+    console.log('Loading RPJMD data...');
+}
+
+function hideLoading() {
+    console.log('RPJMD data loading complete');
 }
 
 // Initialize when DOM is loaded

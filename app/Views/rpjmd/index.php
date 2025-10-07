@@ -75,21 +75,9 @@
                                 <input type="checkbox" id="layer-strategic-all" checked>
                                 <span class="toggle-text">Tampilkan Semua</span>
                             </label>
-                            <label class="layer-toggle">
-                                <input type="checkbox" id="layer-government-center" checked>
-                                <span class="toggle-indicator" style="background-color: #3b82f6;"></span>
-                                <span class="toggle-text">Pusat Pemerintahan</span>
-                            </label>
-                            <label class="layer-toggle">
-                                <input type="checkbox" id="layer-education-zone" checked>
-                                <span class="toggle-indicator" style="background-color: #8b5cf6;"></span>
-                                <span class="toggle-text">Kawasan Pendidikan</span>
-                            </label>
-                            <label class="layer-toggle">
-                                <input type="checkbox" id="layer-economic-zone" checked>
-                                <span class="toggle-indicator" style="background-color: #10b981;"></span>
-                                <span class="toggle-text">Kawasan Ekonomi</span>
-                            </label>
+                            <div id="strategic-layers-list">
+                                <!-- Strategic area layers will be populated dynamically -->
+                            </div>
                         </div>
                     </div>
                     
@@ -100,21 +88,9 @@
                                 <input type="checkbox" id="layer-thematic-all" checked>
                                 <span class="toggle-text">Tampilkan Semua</span>
                             </label>
-                            <label class="layer-toggle">
-                                <input type="checkbox" id="layer-flood-prone" checked>
-                                <span class="toggle-indicator" style="background-color: #ef4444;"></span>
-                                <span class="toggle-text">Rawan Banjir</span>
-                            </label>
-                            <label class="layer-toggle">
-                                <input type="checkbox" id="layer-poverty-zone" checked>
-                                <span class="toggle-indicator" style="background-color: #f59e0b;"></span>
-                                <span class="toggle-text">Kemiskinan Tinggi</span>
-                            </label>
-                            <label class="layer-toggle">
-                                <input type="checkbox" id="layer-health-priority" checked>
-                                <span class="toggle-indicator" style="background-color: #06b6d4;"></span>
-                                <span class="toggle-text">Prioritas Kesehatan</span>
-                            </label>
+                            <div id="thematic-layers-list">
+                                <!-- Thematic zone layers will be populated dynamically -->
+                            </div>
                         </div>
                     </div>
                 </div>
