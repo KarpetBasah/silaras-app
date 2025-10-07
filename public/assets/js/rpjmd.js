@@ -15,6 +15,15 @@ function initRPJMDMap() {
     const mapContainer = document.getElementById('rpjmd-map');
     if (!mapContainer) return;
     
+    // Check if map is already initialized
+    if (rpjmdMap !== null) {
+        console.log('RPJMD Map is already initialized');
+        return;
+    }
+    
+    // Clear any existing map instance
+    mapContainer.innerHTML = '';
+    
     // Create map
     rpjmdMap = L.map('rpjmd-map', {
         center: [-3.4582, 114.8348], // Banjarbaru coordinates (Kalimantan Selatan)
@@ -65,6 +74,12 @@ function initLayerControls() {
     const analyzeBtn = document.getElementById('analyze-alignment');
     if (analyzeBtn) {
         analyzeBtn.addEventListener('click', performAlignment);
+    }
+    
+    // Reset filters button
+    const resetBtn = document.getElementById('reset-filters');
+    if (resetBtn) {
+        resetBtn.addEventListener('click', resetFilters);
     }
     
     // We'll set up layer toggles after loading priority layers
@@ -571,6 +586,23 @@ function applyFilters() {
     loadProgramsWithFilters(sektorId, opdId, status);
 }
 
+// Reset all filters
+function resetFilters() {
+    // Reset all filter dropdowns to default values
+    document.getElementById('filter-tahun-rpjmd').value = '';
+    document.getElementById('filter-sektor-rpjmd').value = '';
+    document.getElementById('filter-status-rpjmd').value = '';
+    document.getElementById('filter-opd-rpjmd').value = '';
+    
+    // Reload all programs without filters
+    loadPrograms();
+    
+    // Hide analysis panel
+    hideAnalysisPanel();
+    
+    showMessage('Filter berhasil direset', 'success');
+}
+
 // Load programs with filters
 async function loadProgramsWithFilters(sektorId = '', opdId = '', status = '') {
     try {
@@ -638,6 +670,13 @@ async function performAlignment() {
 function showAnalysisPanel() {
     if (analysisPanel) {
         analysisPanel.style.display = 'flex';
+    }
+}
+
+// Hide analysis panel
+function hideAnalysisPanel() {
+    if (analysisPanel) {
+        analysisPanel.style.display = 'none';
     }
 }
 
@@ -783,8 +822,32 @@ function hideLoading() {
 
 // Initialize when DOM is loaded
 document.addEventListener('DOMContentLoaded', function() {
-    if (document.getElementById('rpjmd-map')) {
-        initRPJMDMap();
+    // Add a small delay to ensure Leaflet is fully loaded
+    setTimeout(function() {
+        if (document.getElementById('rpjmd-map') && typeof L !== 'undefined') {
+            initRPJMDMap();
+        } else if (typeof L === 'undefined') {
+            console.error('Leaflet library not available on DOMContentLoaded');
+        }
+    }, 100);
+});
+
+// Fallback: Initialize when window is fully loaded
+window.addEventListener('load', function() {
+    // Check if map hasn't been initialized yet
+    if (rpjmdMap === null && document.getElementById('rpjmd-map')) {
+        if (typeof L !== 'undefined') {
+            console.log('Initializing RPJMD Map on window load');
+            initRPJMDMap();
+        } else {
+            console.error('Leaflet library still not available after window load');
+            const mapEl = document.getElementById('rpjmd-map');
+            if (mapEl) {
+                mapEl.innerHTML = 
+                    '<div style="display: flex; align-items: center; justify-content: center; height: 100%; color: #ef4444; background: #fef2f2; border: 1px solid #fecaca; border-radius: 8px; margin: 1rem;">' +
+                    '<p><i class="fas fa-exclamation-triangle"></i> Leaflet library tidak tersedia. Silakan refresh halaman.</p></div>';
+            }
+        }
     }
 });
 

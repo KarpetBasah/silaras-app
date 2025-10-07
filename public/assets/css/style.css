@@ -618,7 +618,7 @@ footer {
 
 /* Module Page Styles */
 .page-header {
-    margin-bottom: 2rem;
+    margin-bottom: 1rem;
     padding-bottom: 1rem;
     border-bottom: 2px solid var(--border-color);
 }
@@ -1215,7 +1215,7 @@ textarea.form-control {
 
 /* RPJMD Controls */
 .rpjmd-controls {
-    margin-bottom: 2rem;
+    margin-bottom: 1rem;
 }
 
 .control-panel {
@@ -1322,8 +1322,9 @@ textarea.form-control {
     position: relative;
     background: var(--white);
     border-radius: 12px;
-    overflow: hidden;
+    padding: 1rem;
     box-shadow: var(--shadow);
+    margin-bottom: 2rem;
 }
 
 /* Analysis Panel */
@@ -1523,29 +1524,174 @@ textarea.form-control {
 
 /* Responsive RPJMD */
 @media (max-width: 768px) {
+    .rpjmd-controls {
+        padding: 1rem;
+    }
+    
+    .control-panel {
+        padding: 1rem;
+    }
+    
+    .filter-section h4 {
+        font-size: 1rem;
+        margin-bottom: 1rem;
+    }
+    
     .filter-row {
-        flex-direction: column;
-        gap: 0.75rem;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1rem;
+        align-items: stretch;
     }
     
     .filter-group {
-        min-width: 100%;
+        min-width: auto;
+    }
+    
+    .filter-group label {
+        font-size: 0.8rem;
+        margin-bottom: 0.5rem;
+    }
+    
+    .filter-group select,
+    .filter-group input {
+        width: 100%;
+        padding: 0.5rem;
+        font-size: 0.85rem;
+        border: 1px solid var(--border-color);
+        border-radius: 6px;
+        background: white;
+    }
+    
+    /* Button group for mobile */
+    .filter-actions {
+        grid-column: 1 / -1;
+        display: flex;
+        gap: 0.5rem;
+        margin-top: 0.5rem;
+    }
+    
+    .filter-actions button {
+        flex: 1;
+        padding: 0.75rem;
+        font-size: 0.85rem;
+        border-radius: 6px;
+        border: none;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+    
+    #analyze-alignment {
+        background: var(--primary-color);
+        color: white;
+    }
+    
+    #analyze-alignment:hover {
+        opacity: 0.9;
+    }
+    
+    .btn-reset {
+        background: var(--secondary-color);
+        color: var(--text-dark);
+    }
+    
+    .btn-reset:hover {
+        background: #e5e7eb;
     }
     
     .layer-toggles {
         grid-template-columns: 1fr;
         gap: 1rem;
+        margin-top: 1.5rem;
+    }
+    
+    .layer-group {
+        background: white;
+        padding: 1rem;
+        border-radius: 8px;
+        border: 1px solid var(--border-color);
+    }
+    
+    .layer-group h5 {
+        font-size: 0.9rem;
+        margin-bottom: 0.75rem;
+        color: var(--text-dark);
+        border-bottom: 1px solid var(--border-color);
+        padding-bottom: 0.5rem;
+    }
+    
+    .layer-items {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+    
+    .layer-toggle {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.25rem 0;
+        font-size: 0.85rem;
+    }
+    
+    .toggle-indicator {
+        width: 12px;
+        height: 12px;
+        border-radius: 2px;
+        flex-shrink: 0;
     }
     
     .analysis-panel {
         position: static;
         width: 100%;
         margin-top: 1rem;
+        border-radius: 8px;
     }
     
     .rpjmd-map-container {
         display: flex;
         flex-direction: column;
+        margin-top: 1rem;
+    }
+    
+    #rpjmd-map {
+        height: 525px !important;
+        border-radius: 8px;
+    }
+}
+
+/* Extra small screens */
+@media (max-width: 480px) {
+    .rpjmd-controls {
+        padding: 0.75rem;
+    }
+    
+    .control-panel {
+        padding: 0.75rem;
+    }
+    
+    .filter-row {
+        grid-template-columns: 1fr;
+        gap: 0.75rem;
+    }
+    
+    .filter-group select,
+    .filter-group input {
+        padding: 0.6rem;
+        font-size: 0.9rem;
+    }
+    
+    .filter-actions {
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+    
+    .layer-group {
+        padding: 0.75rem;
+    }
+    
+    #rpjmd-map {
+        height: 450px !important;
     }
 }
     

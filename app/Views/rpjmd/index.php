@@ -54,13 +54,14 @@
                         </select>
                     </div>
                     
-                    <button id="analyze-alignment" class="btn btn-primary btn-sm">
-                        <i class="fas fa-chart-line"></i> Analisis Keselarasan
-                    </button>
-                    
-                    <button id="reset-filters-rpjmd" class="btn btn-secondary btn-sm">
-                        <i class="fas fa-undo"></i> Reset
-                    </button>
+                    <div class="filter-actions">
+                        <button id="analyze-alignment" class="btn btn-primary btn-sm">
+                            <i class="fas fa-chart-line"></i> Analisis Keselarasan
+                        </button>
+                        <button id="reset-filters" class="btn btn-reset btn-sm">
+                            <i class="fas fa-refresh"></i> Reset
+                        </button>
+                    </div>
                 </div>
             </div>
             
@@ -156,25 +157,31 @@
     </div>
 </div>
 
+<!-- Include Leaflet.js -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css" />
+<script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js" onload="console.log('Leaflet script loaded successfully')" onerror="console.error('Failed to load Leaflet script')"></script>
+
+<!-- Include RPJMD JavaScript -->
+<script src="<?= base_url('assets/js/rpjmd.js') ?>" onload="console.log('RPJMD script loaded successfully')" onerror="console.error('Failed to load RPJMD script')"></script>
+
 <script>
-// Initialize RPJMD map when page loads
-document.addEventListener('DOMContentLoaded', function() {
-    if (typeof L !== 'undefined') {
-        initRPJMDMap();
-    } else {
-        console.error('Leaflet library not loaded');
-        document.getElementById('rpjmd-map').innerHTML = 
-            '<div style="display: flex; align-items: center; justify-content: center; height: 100%; color: #ef4444;">' +
-            '<p><i class="fas fa-exclamation-triangle"></i> Leaflet library tidak tersedia</p></div>';
+// Debug script loading
+console.log('Inline script executing...');
+console.log('Leaflet available?', typeof L !== 'undefined');
+
+// Check if Leaflet is loaded after all scripts are loaded
+window.addEventListener('load', function() {
+    console.log('Window load event - Leaflet available?', typeof L !== 'undefined');
+    if (typeof L === 'undefined') {
+        console.error('Leaflet library not loaded after window load');
+        const mapEl = document.getElementById('rpjmd-map');
+        if (mapEl) {
+            mapEl.innerHTML = 
+                '<div style="display: flex; align-items: center; justify-content: center; height: 100%; color: #ef4444;">' +
+                '<p><i class="fas fa-exclamation-triangle"></i> Leaflet library tidak tersedia</p></div>';
+        }
     }
 });
 </script>
-
-<!-- Include Leaflet.js -->
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-
-<!-- Include RPJMD JavaScript -->
-<script src="<?= base_url('assets/js/rpjmd.js') ?>"></script>
 
 <?= $this->endSection() ?>
