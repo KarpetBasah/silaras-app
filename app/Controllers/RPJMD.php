@@ -178,7 +178,7 @@ class RPJMD extends BaseController
      */
     private function analyzeProgram($program)
     {
-        if (!isset($program['latitude']) || !isset($program['longitude'])) {
+        if (!isset($program['koordinat_lat']) || !isset($program['koordinat_lng'])) {
             return [
                 'aligned' => false,
                 'zones' => [],
@@ -186,8 +186,8 @@ class RPJMD extends BaseController
             ];
         }
         
-        $lat = (float)$program['latitude'];
-        $lng = (float)$program['longitude'];
+        $lat = (float)$program['koordinat_lat'];
+        $lng = (float)$program['koordinat_lng'];
         
         // Get zones containing this point
         $containingZones = $this->priorityZoneModel->getZonesContainingPoint($lat, $lng);

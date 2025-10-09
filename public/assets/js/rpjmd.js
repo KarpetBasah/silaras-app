@@ -439,20 +439,6 @@ function clearPriorityLayers() {
     priorityLayers = {};
     console.log('All priority layers cleared');
 }
-function showPriorityLayer(layerId) {
-    if (priorityLayers[layerId] && !priorityLayers[layerId].visible) {
-        priorityLayers[layerId].layer.addTo(rpjmdMap);
-        priorityLayers[layerId].visible = true;
-    }
-}
-
-// Hide priority layer
-function hidePriorityLayer(layerId) {
-    if (priorityLayers[layerId] && priorityLayers[layerId].visible) {
-        rpjmdMap.removeLayer(priorityLayers[layerId].layer);
-        priorityLayers[layerId].visible = false;
-    }
-}
 
 // Load programs from API
 async function loadPrograms() {
@@ -491,7 +477,7 @@ function displayPrograms() {
     });
     
     currentPrograms.forEach(program => {
-        if (program.lat && program.lng) {
+        if (program.koordinat_lat && program.koordinat_lng) {
             addProgramMarker(program);
         }
     });
@@ -501,7 +487,7 @@ function displayPrograms() {
 function addProgramMarker(program) {
     const markerColor = getStatusColor(program.status);
     
-    const marker = L.circleMarker([program.lat, program.lng], {
+    const marker = L.circleMarker([program.koordinat_lat, program.koordinat_lng], {
         radius: 8,
         fillColor: markerColor,
         color: '#fff',
@@ -647,22 +633,55 @@ async function performAlignment() {
     updateAnalysisPanel('Menganalisis keselarasan program...', null);
     
     try {
-        const response = await fetch('/rpjmd/api/alignment-analysis');
+        console.log('Starting alignment analysis...');
+        
+        // Get current filter values
+        const sektorId = document.getElementById('filter-sektor-rpjmd')?.value || '';
+        const opdId = document.getElementById('filter-opd-rpjmd')?.value || '';
+        const status = document.getElementById('filter-status-rpjmd')?.value || '';
+        
+        // Build URL with filters
+        let url = '/rpjmd/api/alignment-analysis';
+        const params = [];
+        if (sektorId) params.push(`sektor_id=${sektorId}`);
+        if (opdId) params.push(`opd_id=${opdId}`);
+        if (status) params.push(`status=${status}`);
+        
+        if (params.length > 0) {
+            url += '?' + params.join('&');
+        }
+        
+        console.log('Alignment analysis URL:', url);
+        
+        const response = await fetch(url);
+        
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+        
         const data = await response.json();
+        console.log('Alignment analysis response:', data);
         
         if (data.status === 'success') {
             currentAnalysis = data.data;
+            console.log('Analysis data received:', currentAnalysis);
+            
             updateAnalysisPanel('Analisis Selesai', currentAnalysis);
             
             // Update program markers with alignment info
             updateProgramMarkers(currentAnalysis);
             
+            showMessage('Analisis keselarasan berhasil dilakukan', 'success');
+            
         } else {
+            console.error('Alignment analysis failed:', data.message);
             updateAnalysisPanel('Error: ' + data.message, null);
+            showError('Gagal melakukan analisis: ' + data.message);
         }
     } catch (error) {
         console.error('Error performing alignment analysis:', error);
-        updateAnalysisPanel('Error melakukan analisis keselarasan', null);
+        updateAnalysisPanel('Error melakukan analisis keselarasan: ' + error.message, null);
+        showError('Error melakukan analisis keselarasan: ' + error.message);
     }
 }
 
@@ -714,13 +733,22 @@ function updateAnalysisPanel(message, analysis) {
         ${nonAligned > 0 ? `
         <div class="non-aligned-programs">
             <h5><i class="fas fa-exclamation-triangle"></i> Program Tidak Selaras</h5>
-            ${analysis.non_aligned_programs.slice(0, 5).map(program => `
-                <div class="program-item-small">
-                    <div class="program-name">${program.nama_program}</div>
-                    <div class="program-details">${program.opd_nama} - ${program.sektor_nama}</div>
-                    <a href="#" class="view-detail" onclick="centerMapOnProgram(${program.id})">Lihat di Peta</a>
-                </div>
-            `).join('')}
+            ${analysis.non_aligned_programs.slice(0, 5).map(program => {
+                const hasCoordinates = program.koordinat_lat && program.koordinat_lng && 
+                                     !isNaN(parseFloat(program.koordinat_lat)) && 
+                                     !isNaN(parseFloat(program.koordinat_lng));
+                
+                return `
+                    <div class="program-item-small">
+                        <div class="program-name">${program.nama_kegiatan || program.nama_program || 'Program'}</div>
+                        <div class="program-details">${program.nama_opd || 'N/A'} - ${program.nama_sektor || 'N/A'}</div>
+                        ${hasCoordinates ? 
+                            `<button type="button" class="view-detail btn-link" onclick="centerMapOnProgram(${program.id}, ${program.koordinat_lat}, ${program.koordinat_lng}); return false;">Lihat di Peta</button>` :
+                            `<span class="view-detail" style="color: #666; font-style: italic;">Koordinat tidak tersedia</span>`
+                        }
+                    </div>
+                `;
+            }).join('')}
             ${analysis.non_aligned_programs.length > 5 ? `
                 <p><small>... dan ${analysis.non_aligned_programs.length - 5} program lainnya</small></p>
             ` : ''}
@@ -731,18 +759,27 @@ function updateAnalysisPanel(message, analysis) {
 
 // Update program markers with alignment results
 function updateProgramMarkers(analysis) {
+    console.log('Updating program markers with analysis:', analysis);
+    
+    if (!analysis || !analysis.non_aligned_programs) {
+        console.warn('No analysis data for program markers update');
+        return;
+    }
+    
     const nonAlignedIds = analysis.non_aligned_programs.map(p => p.id);
+    console.log('Non-aligned program IDs:', nonAlignedIds);
     
     rpjmdMap.eachLayer(layer => {
         if (layer.options && layer.options.isProgram) {
             // Find corresponding program
             const program = currentPrograms.find(p => 
-                Math.abs(p.lat - layer.getLatLng().lat) < 0.0001 && 
-                Math.abs(p.lng - layer.getLatLng().lng) < 0.0001
+                Math.abs(p.koordinat_lat - layer.getLatLng().lat) < 0.0001 && 
+                Math.abs(p.koordinat_lng - layer.getLatLng().lng) < 0.0001
             );
             
             if (program) {
                 const isAligned = !nonAlignedIds.includes(program.id);
+                console.log(`Program ${program.id} (${program.nama_program}): ${isAligned ? 'aligned' : 'not aligned'}`);
                 
                 // Update marker style based on alignment
                 layer.setStyle({
@@ -755,20 +792,63 @@ function updateProgramMarkers(analysis) {
 }
 
 // Center map on specific program
-function centerMapOnProgram(programId) {
-    const program = currentPrograms.find(p => p.id === programId);
-    if (program && program.lat && program.lng) {
-        rpjmdMap.setView([program.lat, program.lng], 15);
+function centerMapOnProgram(programId, lat = null, lng = null) {
+    console.log(`Centering map on program ${programId}`, lat, lng);
+    
+    // If coordinates provided directly, use them
+    if (lat !== null && lng !== null && !isNaN(lat) && !isNaN(lng)) {
+        const latitude = parseFloat(lat);
+        const longitude = parseFloat(lng);
         
-        // Find and open marker popup
-        rpjmdMap.eachLayer(layer => {
-            if (layer.options && layer.options.isProgram) {
-                if (Math.abs(layer.getLatLng().lat - program.lat) < 0.0001 && 
-                    Math.abs(layer.getLatLng().lng - program.lng) < 0.0001) {
-                    layer.openPopup();
+        console.log(`Using direct coordinates: ${latitude}, ${longitude}`);
+        rpjmdMap.setView([latitude, longitude], 16);
+        
+        // Find and open marker popup - search in all layers including programMarkers
+        let markerFound = false;
+        
+        // First check in programMarkers array
+        if (programMarkers && programMarkers.length > 0) {
+            programMarkers.forEach(marker => {
+                if (marker && marker.getLatLng) {
+                    const layerLatLng = marker.getLatLng();
+                    if (Math.abs(layerLatLng.lat - latitude) < 0.0001 && 
+                        Math.abs(layerLatLng.lng - longitude) < 0.0001) {
+                        marker.openPopup();
+                        markerFound = true;
+                    }
                 }
-            }
-        });
+            });
+        }
+        
+        // If not found in programMarkers, check all map layers
+        if (!markerFound) {
+            rpjmdMap.eachLayer(layer => {
+                if (layer.getLatLng && (layer.options.isProgram || layer._programId)) {
+                    const layerLatLng = layer.getLatLng();
+                    if (Math.abs(layerLatLng.lat - latitude) < 0.0001 && 
+                        Math.abs(layerLatLng.lng - longitude) < 0.0001) {
+                        layer.openPopup();
+                        markerFound = true;
+                    }
+                }
+            });
+        }
+        
+        if (!markerFound) {
+            console.log('Marker not found on map, but centered on coordinates');
+            showMessage('Peta telah dipusatkan pada lokasi program', 'info');
+        }
+        return;
+    }
+    
+    // Fallback: search in currentPrograms
+    const program = currentPrograms.find(p => p.id === programId);
+    if (program && program.koordinat_lat && program.koordinat_lng) {
+        console.log(`Using program from currentPrograms:`, program);
+        centerMapOnProgram(programId, program.koordinat_lat, program.koordinat_lng);
+    } else {
+        console.warn(`Program ${programId} not found or missing coordinates`);
+        showMessage('Program tidak ditemukan atau koordinat tidak tersedia', 'warning');
     }
 }
 

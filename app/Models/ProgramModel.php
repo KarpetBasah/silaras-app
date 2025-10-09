@@ -98,6 +98,20 @@ class ProgramModel extends Model
     }
 
     /**
+     * Get single program with related data
+     */
+    public function getProgramWithRelations($id)
+    {
+        return $this->select('program.*, opd.nama_opd, opd.nama_singkat as opd_singkat, 
+                             sektor.nama_sektor, sektor.icon as sektor_icon, sektor.color as sektor_color,
+                             rpjmd_sasaran.nama_sasaran as rpjmd_nama')
+                   ->join('opd', 'opd.id = program.opd_id')
+                   ->join('sektor', 'sektor.id = program.sektor_id') 
+                   ->join('rpjmd_sasaran', 'rpjmd_sasaran.id = program.rpjmd_sasaran_id', 'left')
+                   ->find($id);
+    }
+
+    /**
      * Get program detail with relations
      */
     public function getProgramDetail($id)
