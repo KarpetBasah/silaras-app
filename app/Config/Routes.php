@@ -34,6 +34,7 @@ $routes->group('rpjmd', static function ($routes) {
     $routes->group('api', static function ($routes) {
         $routes->get('priority-layers', 'RPJMD::getPriorityLayers');
         $routes->get('alignment-analysis', 'RPJMD::getAlignmentAnalysis');
+        $routes->get('programs', 'RPJMD::getPrograms');
     });
 });
 $routes->get('analisis', 'Analisis::index');

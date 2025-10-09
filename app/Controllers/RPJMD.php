@@ -224,4 +224,34 @@ class RPJMD extends BaseController
         
         return 'Program berada dalam zona prioritas RPJMD. Pertimbangkan untuk mengoptimalkan dampak program sesuai dengan tema zona.';
     }
+
+    /**
+     * Get programs for map display
+     */
+    public function getPrograms()
+    {
+        try {
+            $filters = [
+                'sektor_id' => $this->request->getGet('sektor_id'),
+                'opd_id' => $this->request->getGet('opd_id'),
+                'status' => $this->request->getGet('status'),
+                'tahun' => $this->request->getGet('tahun')
+            ];
+            
+            $programs = $this->programModel->getProgramsWithRelations($filters);
+            
+            return $this->response->setJSON([
+                'success' => true,
+                'data' => $programs
+            ]);
+            
+        } catch (\Exception $e) {
+            log_message('error', 'Error getting programs: ' . $e->getMessage());
+            
+            return $this->response->setStatusCode(500)->setJSON([
+                'success' => false,
+                'message' => 'Terjadi kesalahan saat mengambil data program'
+            ]);
+        }
+    }
 }

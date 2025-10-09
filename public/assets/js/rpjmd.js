@@ -441,10 +441,11 @@ function clearPriorityLayers() {
 }
 
 // Load programs from API
+// Load programs from RPJMD API
 async function loadPrograms() {
     try {
         console.log('Loading programs...');
-        const response = await fetch('/peta-program/api/programs');
+        const response = await fetch('/rpjmd/api/programs');
         
         if (!response.ok) {
             throw new Error(`HTTP ${response.status}: ${response.statusText}`);
@@ -469,6 +470,8 @@ async function loadPrograms() {
 
 // Display programs on map
 function displayPrograms() {
+    console.log('Displaying programs on map...', currentPrograms.length);
+    
     // Remove existing program markers
     rpjmdMap.eachLayer(layer => {
         if (layer.options && layer.options.isProgram) {
@@ -476,18 +479,48 @@ function displayPrograms() {
         }
     });
     
-    currentPrograms.forEach(program => {
+    // Clear programMarkers array
+    programMarkers = [];
+    
+    let markerCount = 0;
+    currentPrograms.forEach((program, index) => {
+        console.log(`Processing program ${index + 1}:`, program);
+        
         if (program.koordinat_lat && program.koordinat_lng) {
-            addProgramMarker(program);
+            const lat = parseFloat(program.koordinat_lat);
+            const lng = parseFloat(program.koordinat_lng);
+            
+            if (!isNaN(lat) && !isNaN(lng)) {
+                console.log(`Adding marker for program ${program.id} at ${lat}, ${lng}`);
+                addProgramMarker(program);
+                markerCount++;
+            } else {
+                console.warn(`Invalid coordinates for program ${program.id}:`, program.koordinat_lat, program.koordinat_lng);
+            }
+        } else {
+            console.warn(`Missing coordinates for program ${program.id}:`, program);
         }
     });
+    
+    console.log(`Added ${markerCount} program markers to map`);
 }
 
 // Add program marker to map
 function addProgramMarker(program) {
-    const markerColor = getStatusColor(program.status);
+    console.log(`Adding marker for program:`, program.id, program.nama_kegiatan);
     
-    const marker = L.circleMarker([program.koordinat_lat, program.koordinat_lng], {
+    const lat = parseFloat(program.koordinat_lat);
+    const lng = parseFloat(program.koordinat_lng);
+    
+    if (isNaN(lat) || isNaN(lng)) {
+        console.error(`Invalid coordinates for program ${program.id}:`, lat, lng);
+        return;
+    }
+    
+    const markerColor = getStatusColor(program.status);
+    console.log(`Marker color for status '${program.status}':`, markerColor);
+    
+    const marker = L.circleMarker([lat, lng], {
         radius: 8,
         fillColor: markerColor,
         color: '#fff',
@@ -497,27 +530,30 @@ function addProgramMarker(program) {
         isProgram: true
     });
     
-    // Popup content with alignment info
+    // Popup content with program info
     const popupContent = `
         <div class="rpjmd-popup">
-            <h4>${program.nama_kegiatan}</h4>
-            <p><strong>OPD:</strong> ${program.opd?.nama || 'N/A'}</p>
-            <p><strong>Sektor:</strong> ${program.sektor?.nama || 'N/A'}</p>
-            <p><strong>Status:</strong> <span class="status-${program.status.toLowerCase()}">${program.status}</span></p>
+            <h4>${program.nama_kegiatan || program.nama_program || 'Program'}</h4>
+            <p><strong>OPD:</strong> ${program.nama_opd || 'N/A'}</p>
+            <p><strong>Sektor:</strong> ${program.nama_sektor || 'N/A'}</p>
+            <p><strong>Status:</strong> <span class="status-${(program.status || '').toLowerCase()}">${program.status || 'N/A'}</span></p>
             <p><strong>Anggaran:</strong> Rp ${formatRupiah(program.anggaran_total || 0)}</p>
+            <p><strong>Koordinat:</strong> ${lat.toFixed(6)}, ${lng.toFixed(6)}</p>
             <div class="alignment-status" id="alignment-${program.id}">
-                <em>Menganalisis keselarasan...</em>
+                <em>Klik "Analisis Keselarasan" untuk melihat status keselarasan</em>
             </div>
         </div>
     `;
     
     marker.bindPopup(popupContent);
-    marker.addTo(rpjmdMap);
     
-    // Check alignment when popup opens
-    marker.on('popupopen', () => {
-        checkProgramAlignment(program);
-    });
+    try {
+        marker.addTo(rpjmdMap);
+        programMarkers.push(marker);
+        console.log(`Marker successfully added for program ${program.id} at [${lat}, ${lng}]`);
+    } catch (error) {
+        console.error(`Error adding marker for program ${program.id}:`, error);
+    }
 }
 
 // Check program alignment with priority zones
@@ -590,9 +626,10 @@ function resetFilters() {
 }
 
 // Load programs with filters
+// Load programs with filters from RPJMD API
 async function loadProgramsWithFilters(sektorId = '', opdId = '', status = '') {
     try {
-        let url = '/peta-program/api/programs?';
+        let url = '/rpjmd/api/programs?';
         const params = [];
         
         if (sektorId && sektorId !== '') params.push(`sektor_id=${sektorId}`);
