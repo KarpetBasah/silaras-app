@@ -37,5 +37,16 @@ $routes->group('rpjmd', static function ($routes) {
         $routes->get('programs', 'RPJMD::getPrograms');
     });
 });
-$routes->get('analisis', 'Analisis::index');
+// Analisis Routes
+$routes->group('analisis', static function ($routes) {
+    $routes->get('', 'Analisis::index');
+    $routes->group('api', static function ($routes) {
+        $routes->get('tumpang-tindih', 'Analisis::getTumpangTindih');
+        $routes->get('kesenjangan', 'Analisis::getKesenjangan');
+        $routes->get('keselarasan-rpjmd', 'Analisis::getKeselarasanRPJMD');
+        $routes->get('statistik', 'Analisis::getStatistikAnalisis');
+    });
+});
+
+// Monitoring Routes
 $routes->get('monitoring', 'Monitoring::index');

@@ -264,6 +264,14 @@ class RpjmdPriorityZoneModel extends Model
     }
     
     /**
+     * Get active zones (alias for backward compatibility)
+     */
+    public function getActiveZones()
+    {
+        return $this->where('is_active', true)->findAll();
+    }
+
+    /**
      * Get zones formatted for Leaflet
      */
     public function getForLeaflet($activeOnly = true)
