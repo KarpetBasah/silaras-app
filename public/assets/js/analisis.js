@@ -119,6 +119,56 @@ function initAnalysisTabs() {
             updateMapForTab(targetTab);
         });
     });
+    
+    // Initialize alignment section tabs
+    initAlignmentSectionTabs();
+    
+    // Initialize breakdown tabs
+    initBreakdownTabs();
+}
+
+/**
+ * Initialize alignment section tabs (breakdown, programs, recommendations)
+ */
+function initAlignmentSectionTabs() {
+    const sectionTabs = document.querySelectorAll('.section-tab');
+    const sectionContents = document.querySelectorAll('.section-content');
+    
+    sectionTabs.forEach(tab => {
+        tab.addEventListener('click', function() {
+            const targetSection = this.dataset.section;
+            
+            // Remove active class from all tabs and contents
+            sectionTabs.forEach(t => t.classList.remove('active'));
+            sectionContents.forEach(content => content.classList.remove('active'));
+            
+            // Add active class to clicked tab and corresponding content
+            this.classList.add('active');
+            document.getElementById(`section-${targetSection}`).classList.add('active');
+        });
+    });
+}
+
+/**
+ * Initialize breakdown tabs (sector, OPD, priority)
+ */
+function initBreakdownTabs() {
+    const breakdownTabs = document.querySelectorAll('.breakdown-tab');
+    
+    breakdownTabs.forEach(tab => {
+        tab.addEventListener('click', function() {
+            const targetBreakdown = this.dataset.breakdown;
+            
+            // Remove active class from all breakdown tabs
+            breakdownTabs.forEach(t => t.classList.remove('active'));
+            
+            // Add active class to clicked tab
+            this.classList.add('active');
+            
+            // Load breakdown data
+            loadBreakdownData(targetBreakdown);
+        });
+    });
 }
 
 /**
@@ -412,11 +462,388 @@ function updateAlignmentAnalysis(alignment) {
     document.getElementById('aligned-programs').textContent = alignment.statistics.aligned_count || 0;
     document.getElementById('misaligned-programs').textContent = alignment.statistics.misaligned_count || 0;
     document.getElementById('alignment-percentage').textContent = (alignment.statistics.alignment_percentage || 0) + '%';
+    document.getElementById('total-analyzed-programs').textContent = alignment.statistics.total_programs || 0;
+    document.getElementById('center-alignment-percentage').textContent = (alignment.statistics.alignment_percentage || 0) + '%';
+    
+    // Calculate alignment score (out of 100)
+    const alignmentScore = Math.round(alignment.statistics.alignment_percentage || 0);
+    document.getElementById('alignment-score').textContent = alignmentScore;
+    
+    // Update programs list
+    updateAlignmentProgramsList(alignment.aligned, alignment.misaligned);
+    
+    // Update recommendations
+    updateAlignmentRecommendations(alignment);
     
     // Update pie chart if Chart.js is available
     if (typeof Chart !== 'undefined') {
         updateAlignmentChart(alignment.statistics);
     }
+}
+
+/**
+ * Update alignment programs list
+ */
+function updateAlignmentProgramsList(aligned, misaligned) {
+    const container = document.getElementById('programs-list');
+    container.innerHTML = '';
+    
+    const allPrograms = [
+        ...aligned.map(p => ({...p, alignment_status: 'aligned'})),
+        ...misaligned.map(p => ({...p, alignment_status: 'misaligned'}))
+    ];
+    
+    if (allPrograms.length === 0) {
+        container.innerHTML = '<div class="no-data">Tidak ada program untuk ditampilkan</div>';
+        return;
+    }
+    
+    allPrograms.forEach(program => {
+        const item = document.createElement('div');
+        item.className = `program-item ${program.alignment_status}`;
+        item.innerHTML = `
+            <div class="program-header">
+                <h5>${program.nama_kegiatan}</h5>
+                <span class="alignment-badge ${program.alignment_status}">
+                    ${program.alignment_status === 'aligned' ? 'Selaras' : 'Tidak Selaras'}
+                </span>
+            </div>
+            <div class="program-details">
+                <p><strong>Sektor:</strong> ${program.sektor}</p>
+                <p><strong>OPD:</strong> ${program.opd}</p>
+                <p><strong>Anggaran:</strong> ${formatCurrency(program.anggaran)}</p>
+                ${program.alignment_info ? `<p><strong>Zona RPJMD:</strong> ${program.alignment_info.priority_zone}</p>` : ''}
+            </div>
+        `;
+        container.appendChild(item);
+    });
+    
+    // Initialize filter functionality
+    initProgramsFilter(allPrograms);
+}
+
+/**
+ * Initialize programs filter functionality
+ */
+function initProgramsFilter(programs) {
+    const alignmentFilter = document.getElementById('program-alignment-filter');
+    const searchInput = document.getElementById('program-search');
+    
+    function filterPrograms() {
+        const alignmentValue = alignmentFilter.value;
+        const searchValue = searchInput.value.toLowerCase();
+        
+        const items = document.querySelectorAll('.program-item');
+        
+        items.forEach(item => {
+            const isAligned = item.classList.contains('aligned');
+            const programName = item.querySelector('h5').textContent.toLowerCase();
+            
+            let showItem = true;
+            
+            // Filter by alignment status
+            if (alignmentValue) {
+                if (alignmentValue === 'aligned' && !isAligned) showItem = false;
+                if (alignmentValue === 'misaligned' && isAligned) showItem = false;
+            }
+            
+            // Filter by search term
+            if (searchValue && !programName.includes(searchValue)) {
+                showItem = false;
+            }
+            
+            item.style.display = showItem ? 'block' : 'none';
+        });
+    }
+    
+    alignmentFilter.addEventListener('change', filterPrograms);
+    searchInput.addEventListener('input', debounce(filterPrograms, 300));
+}
+
+/**
+ * Update alignment recommendations
+ */
+function updateAlignmentRecommendations(alignment) {
+    const container = document.getElementById('alignment-recommendations');
+    container.innerHTML = '';
+    
+    const recommendations = generateAlignmentRecommendations(alignment);
+    
+    if (recommendations.length === 0) {
+        container.innerHTML = '<div class="no-data">Tidak ada rekomendasi khusus</div>';
+        return;
+    }
+    
+    recommendations.forEach(rec => {
+        const card = document.createElement('div');
+        card.className = `recommendation-card ${rec.priority}`;
+        card.innerHTML = `
+            <div class="rec-header">
+                <div class="rec-icon">
+                    <i class="${rec.icon}"></i>
+                </div>
+                <div class="rec-title">
+                    <h4>${rec.title}</h4>
+                    <span class="rec-priority">${rec.priority.toUpperCase()}</span>
+                </div>
+            </div>
+            <div class="rec-description">
+                <p>${rec.description}</p>
+            </div>
+            <div class="rec-actions">
+                <strong>Tindakan yang disarankan:</strong>
+                <ul>
+                    ${rec.actions.map(action => `<li>${action}</li>`).join('')}
+                </ul>
+            </div>
+        `;
+        container.appendChild(card);
+    });
+}
+
+/**
+ * Generate alignment recommendations based on analysis
+ */
+function generateAlignmentRecommendations(alignment) {
+    const recommendations = [];
+    const alignmentPercentage = alignment.statistics.alignment_percentage || 0;
+    
+    if (alignmentPercentage < 50) {
+        recommendations.push({
+            priority: 'urgent',
+            icon: 'fas fa-exclamation-triangle',
+            title: 'Keselarasan Rendah Memerlukan Perhatian Segera',
+            description: 'Kurang dari 50% program berada dalam zona prioritas RPJMD. Hal ini menunjukkan adanya ketidakselarasan yang signifikan dalam perencanaan.',
+            actions: [
+                'Review ulang lokasi program yang tidak selaras',
+                'Pertimbangkan relokasi program ke zona prioritas',
+                'Evaluasi kembali penetapan zona prioritas RPJMD',
+                'Koordinasi dengan OPD terkait penyesuaian program'
+            ]
+        });
+    }
+    
+    if (alignment.misaligned.length > 0) {
+        const majorMisalignedSectors = getMajorMisalignedSectors(alignment.misaligned);
+        if (majorMisalignedSectors.length > 0) {
+            recommendations.push({
+                priority: 'important',
+                icon: 'fas fa-chart-line',
+                title: 'Sektor dengan Keselarasan Rendah',
+                description: `Sektor ${majorMisalignedSectors.join(', ')} memiliki banyak program di luar zona prioritas RPJMD.`,
+                actions: [
+                    'Fokus pada peningkatan keselarasan sektor prioritas',
+                    'Lakukan assessment mendalam untuk sektor tersebut',
+                    'Pertimbangkan penyesuaian strategi sektoral'
+                ]
+            });
+        }
+    }
+    
+    if (alignmentPercentage >= 80) {
+        recommendations.push({
+            priority: 'normal',
+            icon: 'fas fa-thumbs-up',
+            title: 'Keselarasan Baik - Pertahankan Kualitas',
+            description: 'Tingkat keselarasan dengan RPJMD sudah sangat baik. Fokus pada optimalisasi dan monitoring.',
+            actions: [
+                'Monitoring berkala untuk mempertahankan keselarasan',
+                'Dokumentasi best practices',
+                'Share learning ke OPD lain'
+            ]
+        });
+    }
+    
+    return recommendations;
+}
+
+/**
+ * Get sectors with major misalignment issues
+ */
+function getMajorMisalignedSectors(misalignedPrograms) {
+    const sectorCounts = {};
+    
+    misalignedPrograms.forEach(program => {
+        const sector = program.sektor;
+        sectorCounts[sector] = (sectorCounts[sector] || 0) + 1;
+    });
+    
+    return Object.keys(sectorCounts)
+        .filter(sector => sectorCounts[sector] >= 3)
+        .sort((a, b) => sectorCounts[b] - sectorCounts[a]);
+}
+
+/**
+ * Load breakdown data based on selected type
+ */
+function loadBreakdownData(type) {
+    const container = document.getElementById('alignment-breakdown-content');
+    container.innerHTML = '<div class="loading-state"><i class="fas fa-spinner fa-spin"></i><p>Memuat data breakdown...</p></div>';
+    
+    // Simulate loading - in real implementation, fetch from API
+    setTimeout(() => {
+        let content = '';
+        
+        switch(type) {
+            case 'sector':
+                content = generateSectorBreakdown();
+                break;
+            case 'opd':
+                content = generateOPDBreakdown();
+                break;
+            case 'priority':
+                content = generatePriorityBreakdown();
+                break;
+        }
+        
+        container.innerHTML = content;
+    }, 1000);
+}
+
+/**
+ * Generate sector breakdown content
+ */
+function generateSectorBreakdown() {
+    return `
+        <div class="breakdown-chart">
+            <h4>Keselarasan per Sektor</h4>
+            <div class="chart-placeholder">
+                <canvas id="sector-breakdown-chart" width="400" height="300"></canvas>
+            </div>
+        </div>
+        <div class="breakdown-table">
+            <table class="breakdown-data-table">
+                <thead>
+                    <tr>
+                        <th>Sektor</th>
+                        <th>Total Program</th>
+                        <th>Selaras</th>
+                        <th>Tidak Selaras</th>
+                        <th>% Keselarasan</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Infrastruktur Jalan</td>
+                        <td>15</td>
+                        <td>12</td>
+                        <td>3</td>
+                        <td>80%</td>
+                    </tr>
+                    <tr>
+                        <td>Pendidikan</td>
+                        <td>8</td>
+                        <td>6</td>
+                        <td>2</td>
+                        <td>75%</td>
+                    </tr>
+                    <tr>
+                        <td>Kesehatan</td>
+                        <td>5</td>
+                        <td>4</td>
+                        <td>1</td>
+                        <td>80%</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    `;
+}
+
+/**
+ * Generate OPD breakdown content
+ */
+function generateOPDBreakdown() {
+    return `
+        <div class="breakdown-chart">
+            <h4>Keselarasan per OPD</h4>
+            <div class="chart-placeholder">
+                <canvas id="opd-breakdown-chart" width="400" height="300"></canvas>
+            </div>
+        </div>
+        <div class="breakdown-table">
+            <table class="breakdown-data-table">
+                <thead>
+                    <tr>
+                        <th>OPD</th>
+                        <th>Total Program</th>
+                        <th>Selaras</th>
+                        <th>Tidak Selaras</th>
+                        <th>% Keselarasan</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Dinas PUPR</td>
+                        <td>12</td>
+                        <td>10</td>
+                        <td>2</td>
+                        <td>83%</td>
+                    </tr>
+                    <tr>
+                        <td>Dinas Pendidikan</td>
+                        <td>8</td>
+                        <td>6</td>
+                        <td>2</td>
+                        <td>75%</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    `;
+}
+
+/**
+ * Generate priority breakdown content
+ */
+function generatePriorityBreakdown() {
+    return `
+        <div class="breakdown-chart">
+            <h4>Program per Zona Prioritas</h4>
+            <div class="priority-zones-summary">
+                <div class="zone-card high-priority">
+                    <div class="zone-header">
+                        <h5>Zona Prioritas Tinggi</h5>
+                        <span class="zone-count">18 Program</span>
+                    </div>
+                    <div class="zone-details">
+                        <p>Kawasan strategis pengembangan ekonomi</p>
+                        <div class="zone-programs">
+                            <span class="program-count selaras">15 Selaras</span>
+                            <span class="program-count tidak-selaras">3 Tidak Selaras</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="zone-card medium-priority">
+                    <div class="zone-header">
+                        <h5>Zona Prioritas Sedang</h5>
+                        <span class="zone-count">8 Program</span>
+                    </div>
+                    <div class="zone-details">
+                        <p>Area pengembangan sosial dan pendidikan</p>
+                        <div class="zone-programs">
+                            <span class="program-count selaras">6 Selaras</span>
+                            <span class="program-count tidak-selaras">2 Tidak Selaras</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="zone-card low-priority">
+                    <div class="zone-header">
+                        <h5>Di Luar Zona Prioritas</h5>
+                        <span class="zone-count">2 Program</span>
+                    </div>
+                    <div class="zone-details">
+                        <p>Program di luar kawasan prioritas RPJMD</p>
+                        <div class="zone-programs">
+                            <span class="program-count tidak-selaras">2 Perlu Review</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
 }
 
 /**
