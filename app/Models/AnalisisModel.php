@@ -149,8 +149,8 @@ class AnalisisModel extends Model
                 'alignment_percentage' => count($programs) > 0 ? 
                     round((count($aligned) / count($programs)) * 100, 2) : 0
             ],
-            'by_sector' => $this->analyzeAlignmentBySector($aligned, $misaligned),
-            'by_opd' => $this->analyzeAlignmentByOPD($aligned, $misaligned)
+            'by_sector' => $this->analyzeAlignmentBySectorFixed($aligned, $misaligned),
+            'by_opd' => $this->analyzeAlignmentByOPDFixed($aligned, $misaligned)
         ];
     }
 
@@ -167,27 +167,187 @@ class AnalisisModel extends Model
         // Sector analysis
         $sectorStats = $this->calculateSectorStatistics($programs);
         
-        // Regional analysis
-        $regionalStats = $this->calculateRegionalDistribution($programs);
-        
         // Budget analysis
         $budgetStats = $this->calculateBudgetAnalysis($programs, $overlaps);
         
         return [
             'overview' => [
                 'total_programs' => count($programs),
-                'overlapping_programs' => count($overlaps) * 2, // Each overlap involves 2 programs
-                'alignment_percentage' => $alignment['statistics']['alignment_percentage'],
-                'coverage_gaps' => count($gaps['gaps']),
+                'overlapping_programs' => count($overlaps),
+                'alignment_percentage' => $alignment['statistics']['alignment_percentage'] ?? 0,
+                'coverage_gaps' => isset($gaps['gaps']) ? count($gaps['gaps']) : 0,
                 'total_budget' => array_sum(array_column($programs, 'anggaran_total')),
                 'potential_savings' => $this->calculatePotentialSavings($overlaps)
             ],
             'sectors' => $sectorStats,
-            'regions' => $regionalStats,
             'budget' => $budgetStats,
             'quality_indicators' => $this->calculateQualityIndicators($programs, $overlaps, $alignment),
             'recommendations' => $this->generateComprehensiveRecommendations($programs, $overlaps, $alignment, $gaps)
         ];
+    }
+
+    /**
+     * Calculate sector-wise statistics
+     */
+    private function calculateSectorStatistics($programs)
+    {
+        $sectorCounts = [];
+        $totalBudget = array_sum(array_column($programs, 'anggaran_total'));
+        
+        foreach ($programs as $program) {
+            $sektor = $program['nama_sektor'];
+            if (!isset($sectorCounts[$sektor])) {
+                $sectorCounts[$sektor] = [
+                    'count' => 0,
+                    'budget' => 0
+                ];
+            }
+            $sectorCounts[$sektor]['count']++;
+            $sectorCounts[$sektor]['budget'] += $program['anggaran_total'];
+        }
+        
+        $sectorStats = [];
+        foreach ($sectorCounts as $sektor => $data) {
+            $sectorStats[] = [
+                'sektor' => $sektor,
+                'jumlah' => $data['count'],
+                'persentase' => count($programs) > 0 ? 
+                    round(($data['count'] / count($programs)) * 100, 2) : 0,
+                'budget' => $data['budget'],
+                'budget_percentage' => $totalBudget > 0 ? 
+                    round(($data['budget'] / $totalBudget) * 100, 2) : 0
+            ];
+        }
+        
+        return $sectorStats;
+    }
+
+    /**
+     * Calculate budget analysis
+     */
+    private function calculateBudgetAnalysis($programs, $overlaps)
+    {
+        $totalBudget = array_sum(array_column($programs, 'anggaran_total'));
+        $totalRealization = array_sum(array_column($programs, 'anggaran_realisasi'));
+        
+        return [
+            'total_budget' => $totalBudget,
+            'total_realization' => $totalRealization,
+            'realization_percentage' => $totalBudget > 0 ? 
+                round(($totalRealization / $totalBudget) * 100, 2) : 0,
+            'potential_savings' => $this->calculatePotentialSavings($overlaps)
+        ];
+    }
+
+    /**
+     * Calculate potential savings from overlap resolution
+     */
+    private function calculatePotentialSavings($overlaps)
+    {
+        $savings = 0;
+        foreach ($overlaps as $overlap) {
+            if ($overlap['conflict_level'] === 'Tinggi') {
+                // Estimate 20% savings for high conflicts
+                $minBudget = min($overlap['program1']['anggaran'], $overlap['program2']['anggaran']);
+                $savings += $minBudget * 0.2;
+            }
+        }
+        return $savings;
+    }
+
+    /**
+     * Calculate quality indicators
+     */
+    private function calculateQualityIndicators($programs, $overlaps, $alignment)
+    {
+        $totalPrograms = count($programs);
+        $conflictCount = count($overlaps);
+        $alignmentPercentage = $alignment['statistics']['alignment_percentage'] ?? 0;
+        
+        // Quality score calculation (0-100)
+        $qualityScore = 100;
+        
+        // Deduct points for conflicts
+        if ($totalPrograms > 0) {
+            $conflictRatio = $conflictCount / $totalPrograms;
+            $qualityScore -= $conflictRatio * 30; // Max 30 points deduction
+        }
+        
+        // Deduct points for poor alignment
+        $qualityScore -= (100 - $alignmentPercentage) * 0.4; // Max 40 points deduction
+        
+        $qualityScore = max(0, round($qualityScore, 1));
+        
+        return [
+            'overall_quality_score' => $qualityScore,
+            'conflict_ratio' => $totalPrograms > 0 ? round($conflictCount / $totalPrograms, 3) : 0,
+            'alignment_score' => $alignmentPercentage,
+            'efficiency_index' => $this->calculateEfficiencyIndex($programs, $overlaps)
+        ];
+    }
+
+    /**
+     * Calculate efficiency index
+     */
+    private function calculateEfficiencyIndex($programs, $overlaps)
+    {
+        if (count($programs) == 0) return 0;
+        
+        $totalBudget = array_sum(array_column($programs, 'anggaran_total'));
+        $wastedBudget = $this->calculatePotentialSavings($overlaps);
+        
+        return $totalBudget > 0 ? round((1 - $wastedBudget / $totalBudget) * 100, 2) : 100;
+    }
+
+    /**
+     * Generate comprehensive recommendations
+     */
+    private function generateComprehensiveRecommendations($programs, $overlaps, $alignment, $gaps)
+    {
+        $recommendations = [];
+        
+        // High conflict recommendation
+        $highConflicts = array_filter($overlaps, function($overlap) {
+            return $overlap['conflict_level'] === 'Tinggi';
+        });
+        
+        if (count($highConflicts) > 0) {
+            $recommendations[] = [
+                'type' => 'urgent',
+                'title' => 'Resolusi Konflik Tinggi',
+                'description' => 'Terdapat ' . count($highConflicts) . ' konflik tinggi yang memerlukan perhatian segera',
+                'action' => 'Lakukan koordinasi antar OPD untuk menyelesaikan tumpang tindih program'
+            ];
+        }
+        
+        // Low alignment recommendation
+        $alignmentPercentage = $alignment['statistics']['alignment_percentage'] ?? 0;
+        if ($alignmentPercentage < 70) {
+            $recommendations[] = [
+                'type' => 'important',
+                'title' => 'Peningkatan Keselarasan RPJMD',
+                'description' => 'Keselarasan program dengan RPJMD masih rendah (' . $alignmentPercentage . '%)',
+                'action' => 'Review lokasi program agar sesuai dengan zona prioritas RPJMD'
+            ];
+        }
+        
+        // Gap areas recommendation
+        if (isset($gaps['gaps']) && count($gaps['gaps']) > 0) {
+            $highPriorityGaps = array_filter($gaps['gaps'], function($gap) {
+                return $gap['priority_level'] === 'Tinggi';
+            });
+            
+            if (count($highPriorityGaps) > 0) {
+                $recommendations[] = [
+                    'type' => 'normal',
+                    'title' => 'Area Prioritas Tanpa Program',
+                    'description' => 'Terdapat ' . count($highPriorityGaps) . ' area prioritas tinggi tanpa program',
+                    'action' => 'Pertimbangkan penambahan program di area prioritas yang kosong'
+                ];
+            }
+        }
+        
+        return $recommendations;
     }
 
     /**
@@ -541,7 +701,75 @@ class AnalisisModel extends Model
         return $recommendations;
     }
 
-    // Additional statistical methods would continue here...
-    // (Implementation for other private methods like calculateSectorStatistics, 
-    // calculateRegionalDistribution, etc. would follow similar patterns)
+    /**
+     * Analyze alignment by sector (fixed version)
+     */
+    private function analyzeAlignmentBySectorFixed($aligned, $misaligned)
+    {
+        $sectorData = [];
+        
+        // Process aligned programs
+        foreach ($aligned as $program) {
+            $sector = $program['sektor_nama'] ?? 'Tidak Diketahui';
+            if (!isset($sectorData[$sector])) {
+                $sectorData[$sector] = ['aligned' => 0, 'misaligned' => 0, 'total' => 0];
+            }
+            $sectorData[$sector]['aligned']++;
+            $sectorData[$sector]['total']++;
+        }
+        
+        // Process misaligned programs
+        foreach ($misaligned as $program) {
+            $sector = $program['sektor_nama'] ?? 'Tidak Diketahui';
+            if (!isset($sectorData[$sector])) {
+                $sectorData[$sector] = ['aligned' => 0, 'misaligned' => 0, 'total' => 0];
+            }
+            $sectorData[$sector]['misaligned']++;
+            $sectorData[$sector]['total']++;
+        }
+        
+        // Calculate percentages
+        foreach ($sectorData as $sector => &$data) {
+            $data['alignment_percentage'] = $data['total'] > 0 ? 
+                round(($data['aligned'] / $data['total']) * 100, 2) : 0;
+        }
+        
+        return $sectorData;
+    }
+
+    /**
+     * Analyze alignment by OPD (fixed version)
+     */
+    private function analyzeAlignmentByOPDFixed($aligned, $misaligned)
+    {
+        $opdData = [];
+        
+        // Process aligned programs
+        foreach ($aligned as $program) {
+            $opd = $program['opd_nama'] ?? 'Tidak Diketahui';
+            if (!isset($opdData[$opd])) {
+                $opdData[$opd] = ['aligned' => 0, 'misaligned' => 0, 'total' => 0];
+            }
+            $opdData[$opd]['aligned']++;
+            $opdData[$opd]['total']++;
+        }
+        
+        // Process misaligned programs
+        foreach ($misaligned as $program) {
+            $opd = $program['opd_nama'] ?? 'Tidak Diketahui';
+            if (!isset($opdData[$opd])) {
+                $opdData[$opd] = ['aligned' => 0, 'misaligned' => 0, 'total' => 0];
+            }
+            $opdData[$opd]['misaligned']++;
+            $opdData[$opd]['total']++;
+        }
+        
+        // Calculate percentages
+        foreach ($opdData as $opd => &$data) {
+            $data['alignment_percentage'] = $data['total'] > 0 ? 
+                round(($data['aligned'] / $data['total']) * 100, 2) : 0;
+        }
+        
+        return $opdData;
+    }
 }

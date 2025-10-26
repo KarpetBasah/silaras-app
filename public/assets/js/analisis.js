@@ -115,6 +115,25 @@ function initAnalysisTabs() {
             this.classList.add('active');
             document.getElementById(`tab-${targetTab}`).classList.add('active');
             
+            // Load breakdown data if alignment tab is opened and data is available
+            if (targetTab === 'alignment' && analysisData.alignment && analysisData.alignment.by_sector) {
+                // Load default breakdown (sector) when alignment tab is first opened
+                setTimeout(() => {
+                    const activeBreakdownTab = document.querySelector('.breakdown-tab.active');
+                    if (activeBreakdownTab) {
+                        const breakdownType = activeBreakdownTab.dataset.breakdown;
+                        loadBreakdownData(breakdownType);
+                    } else {
+                        // Set sector as default and load its data
+                        const sectorTab = document.querySelector('.breakdown-tab[data-breakdown="sector"]');
+                        if (sectorTab) {
+                            sectorTab.classList.add('active');
+                            loadBreakdownData('sector');
+                        }
+                    }
+                }, 100);
+            }
+            
             // Update map view based on selected tab
             updateMapForTab(targetTab);
         });
@@ -145,6 +164,18 @@ function initAlignmentSectionTabs() {
             // Add active class to clicked tab and corresponding content
             this.classList.add('active');
             document.getElementById(`section-${targetSection}`).classList.add('active');
+            
+            // If breakdown section is opened and we have alignment data, load breakdown
+            if (targetSection === 'breakdown' && analysisData.alignment && analysisData.alignment.by_sector) {
+                const activeBreakdownTab = document.querySelector('.breakdown-tab.active');
+                if (activeBreakdownTab) {
+                    const breakdownType = activeBreakdownTab.dataset.breakdown;
+                    loadBreakdownData(breakdownType);
+                } else {
+                    // Load default (sector) breakdown
+                    loadBreakdownData('sector');
+                }
+            }
         });
     });
 }
@@ -326,10 +357,18 @@ function fetchProgramData(filters = {}) {
  * Update overview statistics display
  */
 function updateOverviewStats(stats) {
-    document.getElementById('total-programs-stat').textContent = stats.overview.total_programs || 0;
-    document.getElementById('overlap-count-stat').textContent = stats.overview.overlapping_programs || 0;
-    document.getElementById('gap-count-stat').textContent = stats.overview.coverage_gaps || 0;
-    document.getElementById('alignment-stat').textContent = (stats.overview.alignment_percentage || 0) + '%';
+    // Safely update overview statistics with null checking
+    const totalProgramsStat = document.getElementById('total-programs-stat');
+    if (totalProgramsStat) totalProgramsStat.textContent = stats.overview.total_programs || 0;
+    
+    const overlapCountStat = document.getElementById('overlap-count-stat');
+    if (overlapCountStat) overlapCountStat.textContent = stats.overview.overlapping_programs || 0;
+    
+    const gapCountStat = document.getElementById('gap-count-stat');
+    if (gapCountStat) gapCountStat.textContent = stats.overview.coverage_gaps || 0;
+    
+    const alignmentStat = document.getElementById('alignment-stat');
+    if (alignmentStat) alignmentStat.textContent = (stats.overview.alignment_percentage || 0) + '%';
 }
 
 /**
@@ -362,9 +401,15 @@ function updateOverlapAnalysis(overlaps) {
     const mediumConflicts = overlaps.filter(o => o.conflict_level === 'Sedang').length;
     const lowConflicts = overlaps.filter(o => o.conflict_level === 'Rendah').length;
     
-    document.getElementById('high-conflict').textContent = highConflicts;
-    document.getElementById('medium-conflict').textContent = mediumConflicts;
-    document.getElementById('low-conflict').textContent = lowConflicts;
+    // Safely update elements with null checking
+    const highConflictElement = document.getElementById('high-conflict');
+    if (highConflictElement) highConflictElement.textContent = highConflicts;
+    
+    const mediumConflictElement = document.getElementById('medium-conflict');
+    if (mediumConflictElement) mediumConflictElement.textContent = mediumConflicts;
+    
+    const lowConflictElement = document.getElementById('low-conflict');
+    if (lowConflictElement) lowConflictElement.textContent = lowConflicts;
     
     // Update overlap list
     updateOverlapList(overlaps);
@@ -420,9 +465,15 @@ function updateOverlapList(overlaps) {
  * Update gap analysis display
  */
 function updateGapAnalysis(gaps) {
-    document.getElementById('total-gaps').textContent = gaps.statistics.gap_cells || 0;
-    document.getElementById('priority-gaps').textContent = gaps.statistics.priority_gaps || 0;
-    document.getElementById('coverage-percentage').textContent = (gaps.statistics.coverage_percentage || 0) + '%';
+    // Safely update elements with null checking
+    const totalGaps = document.getElementById('total-gaps');
+    if (totalGaps) totalGaps.textContent = gaps.statistics.gap_cells || 0;
+    
+    const priorityGaps = document.getElementById('priority-gaps');
+    if (priorityGaps) priorityGaps.textContent = gaps.statistics.priority_gaps || 0;
+    
+    const coveragePercentage = document.getElementById('coverage-percentage');
+    if (coveragePercentage) coveragePercentage.textContent = (gaps.statistics.coverage_percentage || 0) + '%';
     
     // Update recommendations
     updateGapRecommendations(gaps.recommendations || []);
@@ -459,18 +510,39 @@ function updateGapRecommendations(recommendations) {
  * Update alignment analysis display
  */
 function updateAlignmentAnalysis(alignment) {
-    document.getElementById('aligned-programs').textContent = alignment.statistics.aligned_count || 0;
-    document.getElementById('misaligned-programs').textContent = alignment.statistics.misaligned_count || 0;
-    document.getElementById('alignment-percentage').textContent = (alignment.statistics.alignment_percentage || 0) + '%';
-    document.getElementById('total-analyzed-programs').textContent = alignment.statistics.total_programs || 0;
-    document.getElementById('center-alignment-percentage').textContent = (alignment.statistics.alignment_percentage || 0) + '%';
+    // Store alignment data for breakdown
+    analysisData.alignment = alignment;
+    
+    // Safely update elements with null checking
+    const alignedPrograms = document.getElementById('aligned-programs');
+    if (alignedPrograms) alignedPrograms.textContent = alignment.statistics.aligned_count || 0;
+    
+    const misalignedPrograms = document.getElementById('misaligned-programs');
+    if (misalignedPrograms) misalignedPrograms.textContent = alignment.statistics.misaligned_count || 0;
+    
+    const alignmentPercentage = document.getElementById('alignment-percentage');
+    if (alignmentPercentage) alignmentPercentage.textContent = (alignment.statistics.alignment_percentage || 0) + '%';
+    
+    const totalAnalyzedPrograms = document.getElementById('total-analyzed-programs');
+    if (totalAnalyzedPrograms) totalAnalyzedPrograms.textContent = alignment.statistics.total_programs || 0;
+    
+    const centerAlignmentPercentage = document.getElementById('center-alignment-percentage');
+    if (centerAlignmentPercentage) centerAlignmentPercentage.textContent = (alignment.statistics.alignment_percentage || 0) + '%';
     
     // Calculate alignment score (out of 100)
     const alignmentScore = Math.round(alignment.statistics.alignment_percentage || 0);
-    document.getElementById('alignment-score').textContent = alignmentScore;
+    const alignmentScoreElement = document.getElementById('alignment-score');
+    if (alignmentScoreElement) alignmentScoreElement.textContent = alignmentScore;
     
     // Update programs list
     updateAlignmentProgramsList(alignment.aligned, alignment.misaligned);
+    
+    // Update breakdown data immediately if breakdown tab is active
+    const activeBreakdownTab = document.querySelector('.breakdown-tab.active');
+    if (activeBreakdownTab) {
+        const breakdownType = activeBreakdownTab.dataset.breakdown;
+        loadBreakdownData(breakdownType);
+    }
     
     // Update recommendations
     updateAlignmentRecommendations(alignment);
@@ -504,7 +576,7 @@ function updateAlignmentProgramsList(aligned, misaligned) {
         item.innerHTML = `
             <div class="program-header">
                 <h5>${program.nama_kegiatan}</h5>
-                <span class="alignment-badge ${program.alignment_status}">
+                <span class="alignment-badge ${program.alignment_status}" style="margin-left: 1rem;">
                     ${program.alignment_status === 'aligned' ? 'Selaras' : 'Tidak Selaras'}
                 </span>
             </div>
@@ -678,40 +750,62 @@ function getMajorMisalignedSectors(misalignedPrograms) {
  */
 function loadBreakdownData(type) {
     const container = document.getElementById('alignment-breakdown-content');
-    container.innerHTML = '<div class="loading-state"><i class="fas fa-spinner fa-spin"></i><p>Memuat data breakdown...</p></div>';
     
-    // Simulate loading - in real implementation, fetch from API
-    setTimeout(() => {
-        let content = '';
-        
-        switch(type) {
-            case 'sector':
-                content = generateSectorBreakdown();
-                break;
-            case 'opd':
-                content = generateOPDBreakdown();
-                break;
-            case 'priority':
-                content = generatePriorityBreakdown();
-                break;
-        }
-        
-        container.innerHTML = content;
-    }, 1000);
+    // Check if we have alignment data
+    if (!analysisData.alignment || !analysisData.alignment.by_sector) {
+        container.innerHTML = '<div class="loading-state"><i class="fas fa-spinner fa-spin"></i><p>Memuat data breakdown...</p></div>';
+        return;
+    }
+    
+    let content = '';
+    
+    switch(type) {
+        case 'sector':
+            content = generateSectorBreakdown(analysisData.alignment.by_sector);
+            break;
+        case 'opd':
+            content = generateOPDBreakdown(analysisData.alignment.by_opd);
+            break;
+        case 'priority':
+            content = generatePriorityBreakdown();
+            break;
+        default:
+            content = generateSectorBreakdown(analysisData.alignment.by_sector);
+    }
+    
+    container.innerHTML = content;
 }
 
 /**
  * Generate sector breakdown content
  */
-function generateSectorBreakdown() {
+function generateSectorBreakdown(sectorData = {}) {
+    let tableRows = '';
+    
+    if (Object.keys(sectorData).length === 0) {
+        tableRows = '<tr><td colspan="5" class="text-center">Tidak ada data sektor</td></tr>';
+    } else {
+        for (const [sectorName, data] of Object.entries(sectorData)) {
+            tableRows += `
+                <tr>
+                    <td>${sectorName}</td>
+                    <td>${data.total || 0}</td>
+                    <td class="text-success">${data.aligned || 0}</td>
+                    <td class="text-warning">${data.misaligned || 0}</td>
+                    <td>
+                        <div class="percentage-bar">
+                            <div class="percentage-fill" style="width: ${data.alignment_percentage || 0}%"></div>
+                            <span class="percentage-text">${data.alignment_percentage || 0}%</span>
+                        </div>
+                    </td>
+                </tr>
+            `;
+        }
+    }
+    
     return `
-        <div class="breakdown-chart">
-            <h4>Keselarasan per Sektor</h4>
-            <div class="chart-placeholder">
-                <canvas id="sector-breakdown-chart" width="400" height="300"></canvas>
-            </div>
-        </div>
         <div class="breakdown-table">
+            <h4 style="margin-bottom: 1rem;">Keselarasan per Sektor</h4>
             <table class="breakdown-data-table">
                 <thead>
                     <tr>
@@ -723,27 +817,7 @@ function generateSectorBreakdown() {
                     </tr>
                 </thead>
                 <tbody>
-                    <tr>
-                        <td>Infrastruktur Jalan</td>
-                        <td>15</td>
-                        <td>12</td>
-                        <td>3</td>
-                        <td>80%</td>
-                    </tr>
-                    <tr>
-                        <td>Pendidikan</td>
-                        <td>8</td>
-                        <td>6</td>
-                        <td>2</td>
-                        <td>75%</td>
-                    </tr>
-                    <tr>
-                        <td>Kesehatan</td>
-                        <td>5</td>
-                        <td>4</td>
-                        <td>1</td>
-                        <td>80%</td>
-                    </tr>
+                    ${tableRows}
                 </tbody>
             </table>
         </div>
@@ -753,15 +827,33 @@ function generateSectorBreakdown() {
 /**
  * Generate OPD breakdown content
  */
-function generateOPDBreakdown() {
+function generateOPDBreakdown(opdData = {}) {
+    let tableRows = '';
+    
+    if (Object.keys(opdData).length === 0) {
+        tableRows = '<tr><td colspan="5" class="text-center">Tidak ada data OPD</td></tr>';
+    } else {
+        for (const [opdName, data] of Object.entries(opdData)) {
+            tableRows += `
+                <tr>
+                    <td>${opdName}</td>
+                    <td>${data.total || 0}</td>
+                    <td class="text-success">${data.aligned || 0}</td>
+                    <td class="text-warning">${data.misaligned || 0}</td>
+                    <td>
+                        <div class="percentage-bar">
+                            <div class="percentage-fill" style="width: ${data.alignment_percentage || 0}%"></div>
+                            <span class="percentage-text">${data.alignment_percentage || 0}%</span>
+                        </div>
+                    </td>
+                </tr>
+            `;
+        }
+    }
+    
     return `
-        <div class="breakdown-chart">
-            <h4>Keselarasan per OPD</h4>
-            <div class="chart-placeholder">
-                <canvas id="opd-breakdown-chart" width="400" height="300"></canvas>
-            </div>
-        </div>
         <div class="breakdown-table">
+            <h4 style="margin-bottom: 1rem;">Keselarasan per OPD</h4>
             <table class="breakdown-data-table">
                 <thead>
                     <tr>
@@ -773,20 +865,7 @@ function generateOPDBreakdown() {
                     </tr>
                 </thead>
                 <tbody>
-                    <tr>
-                        <td>Dinas PUPR</td>
-                        <td>12</td>
-                        <td>10</td>
-                        <td>2</td>
-                        <td>83%</td>
-                    </tr>
-                    <tr>
-                        <td>Dinas Pendidikan</td>
-                        <td>8</td>
-                        <td>6</td>
-                        <td>2</td>
-                        <td>75%</td>
-                    </tr>
+                    ${tableRows}
                 </tbody>
             </table>
         </div>
@@ -798,7 +877,7 @@ function generateOPDBreakdown() {
  */
 function generatePriorityBreakdown() {
     return `
-        <div class="breakdown-chart">
+        <div class="breakdown-table">
             <h4>Program per Zona Prioritas</h4>
             <div class="priority-zones-summary">
                 <div class="zone-card high-priority">

@@ -50,3 +50,7 @@ $routes->group('analisis', static function ($routes) {
 
 // Monitoring Routes
 $routes->get('monitoring', 'Monitoring::index');
+
+// Test Routes (remove in production)
+$routes->get('test-analisis/methods', 'TestAnalisis::testMethods');
+$routes->get('test-analisis/statistik', 'TestAnalisis::testStatistik');

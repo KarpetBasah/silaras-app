@@ -162,16 +162,29 @@ class Analisis extends BaseController
      */
     private function getTahunList()
     {
-        $tahunData = $this->programModel->select('tahun_pelaksanaan')
-                                        ->distinct()
-                                        ->orderBy('tahun_pelaksanaan', 'DESC')
-                                        ->findAll();
-        
-        $tahunList = [];
-        foreach ($tahunData as $row) {
-            $tahunList[] = $row['tahun_pelaksanaan'];
+        try {
+            $tahunData = $this->programModel->select('tahun_pelaksanaan')
+                                            ->distinct()
+                                            ->orderBy('tahun_pelaksanaan', 'DESC')
+                                            ->findAll();
+            
+            $tahunList = [];
+            foreach ($tahunData as $row) {
+                if (!empty($row['tahun_pelaksanaan'])) {
+                    $tahunList[] = $row['tahun_pelaksanaan'];
+                }
+            }
+            
+            // If no years found, provide some default years
+            if (empty($tahunList)) {
+                $tahunList = [2024, 2023, 2022, 2021, 2020];
+            }
+            
+            return $tahunList;
+        } catch (\Exception $e) {
+            log_message('error', 'Error getting tahun list: ' . $e->getMessage());
+            // Return default years if query fails
+            return [2024, 2023, 2022, 2021, 2020];
         }
-        
-        return $tahunList;
     }
 }

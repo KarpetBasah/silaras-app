@@ -285,6 +285,17 @@
                             </div>
                         </div>
                         
+                        <div class="alignment-stat percentage">
+                            <div class="stat-icon">
+                                <i class="fas fa-percentage"></i>
+                            </div>
+                            <div class="stat-content">
+                                <div class="alignment-number" id="alignment-percentage">0%</div>
+                                <div class="alignment-label">Persentase</div>
+                                <div class="stat-description">Keselarasan RPJMD</div>
+                            </div>
+                        </div>
+                        
                         <div class="alignment-stat score">
                             <div class="stat-icon">
                                 <i class="fas fa-star"></i>
@@ -449,12 +460,26 @@
     font-weight: 500;
     color: var(--text-light);
     transition: all 0.3s ease;
+    min-height: 48px; /* Better touch target */
 }
 
 .tab-button.active {
     background: var(--white);
     color: var(--primary-color);
     border-bottom: 3px solid var(--primary-color);
+}
+
+.tab-button:hover {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+/* Touch-friendly improvements */
+.section-tab {
+    min-height: 44px; /* Minimum touch target size */
+}
+
+.breakdown-tab {
+    min-height: 40px; /* Minimum touch target size */
 }
 
 .tab-content {
@@ -719,6 +744,10 @@ input:checked + .slider:before {
 
 .alignment-stat.total {
     border-left: 4px solid var(--accent-color);
+}
+
+.alignment-stat.percentage {
+    border-left: 4px solid var(--info-color);
 }
 
 .alignment-stat.score {
@@ -1007,10 +1036,12 @@ input:checked + .slider:before {
 
 .breakdown-table {
     overflow-x: auto;
+    -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
 }
 
 .breakdown-data-table {
     width: 100%;
+    min-width: 500px; /* Minimum width to prevent cramping */
     border-collapse: collapse;
     background: var(--white);
     border-radius: 8px;
@@ -1115,16 +1146,6 @@ input:checked + .slider:before {
     color: white;
 }
 
-.chart-placeholder {
-    background: var(--light-bg);
-    border: 2px dashed var(--border-color);
-    border-radius: 8px;
-    padding: 2rem;
-    text-align: center;
-    color: var(--text-light);
-    margin-top: 1rem;
-}
-
 .no-data {
     text-align: center;
     padding: 2rem;
@@ -1187,6 +1208,38 @@ input:checked + .slider:before {
     .switch-label {
         font-size: 0.8rem;
     }
+    
+    /* Tablet alignment improvements */
+    .alignment-overview {
+        gap: 1.5rem;
+        padding: 1.5rem;
+    }
+    
+    .alignment-stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1rem;
+    }
+    
+    .alignment-stat {
+        padding: 1.25rem;
+        gap: 0.75rem;
+    }
+    
+    .alignment-stat .stat-icon {
+        font-size: 1.75rem;
+    }
+    
+    .alignment-number {
+        font-size: 1.75rem;
+    }
+    
+    .breakdown-tabs {
+        gap: 0.75rem;
+    }
+    
+    .breakdown-tab {
+        padding: 0.6rem 1.25rem;
+    }
 }
 
 @media (max-width: 768px) {
@@ -1228,19 +1281,72 @@ input:checked + .slider:before {
         font-size: 0.8rem;
     }
     
+    /* Improved RPJMD Alignment Mobile Layout */
     .alignment-overview {
         grid-template-columns: 1fr;
         gap: 1.5rem;
-        text-align: center;
+        padding: 1rem;
+    }
+    
+    .alignment-chart-container {
+        order: 2;
+        margin-top: 1rem;
+    }
+    
+    .chart-wrapper {
+        max-width: 200px;
+        margin: 0 auto;
+    }
+    
+    .chart-wrapper canvas {
+        max-width: 100%;
+        height: auto !important;
+    }
+    
+    .center-percentage {
+        font-size: 1.5rem;
+    }
+    
+    .center-label {
+        font-size: 0.8rem;
     }
     
     .alignment-stats-grid {
         grid-template-columns: 1fr;
         gap: 1rem;
+        order: 1;
+    }
+    
+    .alignment-stat {
+        padding: 1rem;
+        gap: 0.75rem;
+    }
+    
+    .alignment-stat .stat-icon {
+        font-size: 1.5rem;
+        min-width: 30px;
+    }
+    
+    .alignment-number {
+        font-size: 1.5rem;
+    }
+    
+    .alignment-label {
+        font-size: 0.9rem;
+    }
+    
+    .stat-description {
+        font-size: 0.75rem;
     }
     
     .section-tabs {
         flex-direction: column;
+    }
+    
+    .section-tab {
+        padding: 0.75rem 1rem;
+        justify-content: flex-start;
+        text-align: left;
     }
     
     .breakdown-tabs {
@@ -1248,10 +1354,208 @@ input:checked + .slider:before {
         gap: 0.5rem;
     }
     
+    .breakdown-tab {
+        padding: 0.5rem 1rem;
+        justify-content: flex-start;
+        text-align: left;
+    }
+    
     .filter-controls {
         flex-direction: column;
         gap: 0.5rem;
         align-items: stretch;
+    }
+    
+    /* Mobile breakdown table improvements */
+    .breakdown-data-table {
+        font-size: 0.85rem;
+    }
+    
+    .breakdown-data-table th,
+    .breakdown-data-table td {
+        padding: 0.75rem 0.5rem;
+    }
+    
+    .percentage-bar {
+        min-width: 60px;
+        height: 16px;
+    }
+    
+    .percentage-text {
+        font-size: 10px;
+    }
+    
+    /* Zone cards mobile layout */
+    .priority-zones-summary {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+    
+    .zone-card {
+        padding: 1rem;
+    }
+    
+    .zone-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.5rem;
+    }
+    
+    .zone-header h5 {
+        font-size: 1rem;
+    }
+    
+    .zone-count {
+        padding: 0.25rem 0.5rem;
+        font-size: 0.75rem;
+    }
+    
+    .zone-programs {
+        gap: 0.25rem;
+    }
+    
+    .program-count {
+        padding: 0.2rem 0.5rem;
+        font-size: 0.7rem;
+    }
+}
+
+/* Percentage Bar Styles */
+.percentage-bar {
+    position: relative;
+    background: #e9ecef;
+    border-radius: 10px;
+    height: 20px;
+    overflow: hidden;
+    min-width: 80px;
+}
+
+.percentage-fill {
+    background: linear-gradient(90deg, var(--success-color), var(--primary-color));
+    height: 100%;
+    transition: width 0.3s ease;
+    border-radius: inherit;
+}
+
+.percentage-text {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-dark);
+    z-index: 1;
+}
+
+.breakdown-data-table .text-success {
+    color: var(--success-color) !important;
+    font-weight: 600;
+}
+
+.breakdown-data-table .text-warning {
+    color: var(--warning-color) !important;
+    font-weight: 600;
+}
+
+.breakdown-data-table .text-center {
+    text-align: center;
+    font-style: italic;
+    color: var(--text-muted);
+}
+
+/* Small Mobile Devices */
+@media (max-width: 480px) {
+    .analysis-controls {
+        padding: 1rem;
+        margin-bottom: 1rem;
+    }
+    
+    .tab-content {
+        padding: 1rem;
+    }
+    
+    .alignment-overview {
+        padding: 0.75rem;
+        gap: 1rem;
+    }
+    
+    .alignment-stat {
+        padding: 0.75rem;
+        gap: 0.5rem;
+    }
+    
+    .alignment-stat .stat-icon {
+        font-size: 1.25rem;
+        min-width: 25px;
+    }
+    
+    .alignment-number {
+        font-size: 1.25rem;
+    }
+    
+    .alignment-label {
+        font-size: 0.8rem;
+    }
+    
+    .stat-description {
+        font-size: 0.7rem;
+    }
+    
+    .section-tab {
+        padding: 0.6rem 0.75rem;
+        font-size: 0.85rem;
+    }
+    
+    .breakdown-tab {
+        padding: 0.4rem 0.75rem;
+        font-size: 0.85rem;
+    }
+    
+    .breakdown-data-table {
+        font-size: 0.75rem;
+    }
+    
+    .breakdown-data-table th,
+    .breakdown-data-table td {
+        padding: 0.5rem 0.25rem;
+    }
+    
+    .percentage-bar {
+        min-width: 50px;
+        height: 14px;
+    }
+    
+    .percentage-text {
+        font-size: 8px;
+    }
+    
+    .chart-wrapper {
+        max-width: 150px;
+    }
+    
+    .center-percentage {
+        font-size: 1.25rem;
+    }
+    
+    .center-label {
+        font-size: 0.7rem;
+    }
+    
+    .zone-card {
+        padding: 0.75rem;
+    }
+    
+    .zone-header h5 {
+        font-size: 0.9rem;
+    }
+    
+    .zone-count {
+        font-size: 0.7rem;
+    }
+    
+    .program-count {
+        font-size: 0.65rem;
     }
 }
 </style>
