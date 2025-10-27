@@ -17,9 +17,9 @@
                         <div class="filter-group">
                             <label for="filter-tahun">Tahun:</label>
                             <select id="filter-tahun" class="form-control-sm">
-                                <option value="">Semua Tahun</option>
+                                <option value="" selected>Semua Tahun</option>
                                 <?php foreach ($tahun_list as $tahun): ?>
-                                    <option value="<?= $tahun ?>" <?= date('Y') == $tahun ? 'selected' : '' ?>><?= $tahun ?></option>
+                                    <option value="<?= $tahun ?>"><?= $tahun ?></option>
                                 <?php endforeach; ?>
                             </select>
                         </div>

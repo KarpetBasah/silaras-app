@@ -24,6 +24,9 @@ function initAnalysisPage() {
     initAnalysisTabs();
     initAnalysisControls();
     
+    // Show initial loading states
+    showInitialLoadingStates();
+    
     // Load initial data
     loadAnalysisData();
 }
@@ -235,15 +238,55 @@ function loadAnalysisData() {
     const filters = getAnalysisFilters();
     
     Promise.all([
-        fetchAnalysisData('statistik', filters),
-        fetchProgramData(filters)
+        fetchAnalysisData('tumpang-tindih', filters).catch(error => {
+            console.warn('Tumpang tindih data failed to load:', error);
+            return { overlaps: [], statistics: { high: 0, medium: 0, low: 0 } };
+        }),
+        fetchAnalysisData('kesenjangan', filters).catch(error => {
+            console.warn('Kesenjangan data failed to load:', error);
+            return { gaps: [], statistics: { gap_cells: 0, priority_gaps: 0, coverage_percentage: 0 }, recommendations: [] };
+        }),
+        fetchAnalysisData('keselarasan-rpjmd', filters).catch(error => {
+            console.warn('Keselarasan RPJMD data failed to load:', error);
+            return { 
+                aligned: [], 
+                misaligned: [], 
+                statistics: { aligned_count: 0, misaligned_count: 0, total_programs: 0, alignment_percentage: 0 },
+                by_sector: {},
+                by_opd: {}
+            };
+        }),
+        fetchAnalysisData('statistik', filters).catch(error => {
+            console.warn('Statistik data failed to load:', error);
+            return { overview: { total_programs: 0, overlapping_programs: 0, coverage_gaps: 0, alignment_percentage: 0 } };
+        }),
+        fetchProgramData(filters).catch(error => {
+            console.warn('Program data failed to load:', error);
+            return [];
+        })
     ])
-    .then(([statistics, programs]) => {
+    .then(([overlaps, gaps, alignment, statistics, programs]) => {
+        console.log('Analysis data loaded:', { overlaps, gaps, alignment, statistics, programs });
+        
+        analysisData.overlaps = overlaps;
+        analysisData.gaps = gaps;
+        analysisData.alignment = alignment;
         analysisData.statistics = statistics;
         analysisData.programs = programs;
         
+        // Update all displays
         updateOverviewStats(statistics);
+        updateOverlapAnalysis(overlaps);
+        updateGapAnalysis(gaps);
+        updateAlignmentAnalysis(alignment);
         updateProgramMap(programs);
+        
+        // Update map layers
+        updateOverlapMap(overlaps);
+        updateGapMap(gaps);
+        updateAlignmentMap(alignment);
+        
+        showNotification('Data analisis berhasil dimuat', 'success');
     })
     .catch(error => {
         console.error('Error loading analysis data:', error);
@@ -266,26 +309,29 @@ function runAnalysis() {
         fetchAnalysisData('tumpang-tindih', filters),
         fetchAnalysisData('kesenjangan', filters),
         fetchAnalysisData('keselarasan-rpjmd', filters),
-        fetchAnalysisData('statistik', filters)
+        fetchAnalysisData('statistik', filters),
+        fetchProgramData(filters)
     ])
-    .then(([overlaps, gaps, alignment, statistics]) => {
+    .then(([overlaps, gaps, alignment, statistics, programs]) => {
         analysisData.overlaps = overlaps;
         analysisData.gaps = gaps;
         analysisData.alignment = alignment;
         analysisData.statistics = statistics;
+        analysisData.programs = programs;
         
         // Update all displays
         updateOverviewStats(statistics);
         updateOverlapAnalysis(overlaps);
         updateGapAnalysis(gaps);
         updateAlignmentAnalysis(alignment);
+        updateProgramMap(programs);
         
         // Update map layers
         updateOverlapMap(overlaps);
         updateGapMap(gaps);
         updateAlignmentMap(alignment);
         
-        showNotification('Analisis berhasil dijalankan', 'success');
+        showNotification('Analisis berhasil diperbarui', 'success');
     })
     .catch(error => {
         console.error('Error running analysis:', error);
@@ -357,18 +403,21 @@ function fetchProgramData(filters = {}) {
  * Update overview statistics display
  */
 function updateOverviewStats(stats) {
+    // Handle case where stats might have different structure
+    const overview = stats.overview || {};
+    
     // Safely update overview statistics with null checking
     const totalProgramsStat = document.getElementById('total-programs-stat');
-    if (totalProgramsStat) totalProgramsStat.textContent = stats.overview.total_programs || 0;
+    if (totalProgramsStat) totalProgramsStat.textContent = overview.total_programs || 0;
     
     const overlapCountStat = document.getElementById('overlap-count-stat');
-    if (overlapCountStat) overlapCountStat.textContent = stats.overview.overlapping_programs || 0;
+    if (overlapCountStat) overlapCountStat.textContent = overview.overlapping_programs || 0;
     
     const gapCountStat = document.getElementById('gap-count-stat');
-    if (gapCountStat) gapCountStat.textContent = stats.overview.coverage_gaps || 0;
+    if (gapCountStat) gapCountStat.textContent = overview.coverage_gaps || 0;
     
     const alignmentStat = document.getElementById('alignment-stat');
-    if (alignmentStat) alignmentStat.textContent = (stats.overview.alignment_percentage || 0) + '%';
+    if (alignmentStat) alignmentStat.textContent = (overview.alignment_percentage || 0) + '%';
 }
 
 /**
@@ -377,7 +426,19 @@ function updateOverviewStats(stats) {
 function updateProgramMap(programs) {
     programLayer.clearLayers();
     
+    // Handle case where programs might be undefined or empty
+    if (!programs || !Array.isArray(programs) || programs.length === 0) {
+        console.log('No programs to display on map');
+        return;
+    }
+    
     programs.forEach(program => {
+        // Validate program data before creating marker
+        if (!program.lat || !program.lng || !program.sektor) {
+            console.warn('Invalid program data:', program);
+            return;
+        }
+        
         const marker = L.circleMarker([program.lat, program.lng], {
             radius: 6,
             fillColor: getSectorColor(program.sektor.id),
@@ -396,10 +457,13 @@ function updateProgramMap(programs) {
  * Update overlap analysis display
  */
 function updateOverlapAnalysis(overlaps) {
+    // Handle case where overlaps is an object with overlaps array
+    const overlapList = Array.isArray(overlaps) ? overlaps : (overlaps.overlaps || []);
+    
     // Update overlap statistics
-    const highConflicts = overlaps.filter(o => o.conflict_level === 'Tinggi').length;
-    const mediumConflicts = overlaps.filter(o => o.conflict_level === 'Sedang').length;
-    const lowConflicts = overlaps.filter(o => o.conflict_level === 'Rendah').length;
+    const highConflicts = overlapList.filter(o => o.conflict_level === 'Tinggi').length;
+    const mediumConflicts = overlapList.filter(o => o.conflict_level === 'Sedang').length;
+    const lowConflicts = overlapList.filter(o => o.conflict_level === 'Rendah').length;
     
     // Safely update elements with null checking
     const highConflictElement = document.getElementById('high-conflict');
@@ -412,7 +476,7 @@ function updateOverlapAnalysis(overlaps) {
     if (lowConflictElement) lowConflictElement.textContent = lowConflicts;
     
     // Update overlap list
-    updateOverlapList(overlaps);
+    updateOverlapList(overlapList);
 }
 
 /**
@@ -465,15 +529,18 @@ function updateOverlapList(overlaps) {
  * Update gap analysis display
  */
 function updateGapAnalysis(gaps) {
+    // Handle case where gaps might have different structure
+    const gapStats = gaps.statistics || {};
+    
     // Safely update elements with null checking
     const totalGaps = document.getElementById('total-gaps');
-    if (totalGaps) totalGaps.textContent = gaps.statistics.gap_cells || 0;
+    if (totalGaps) totalGaps.textContent = gapStats.gap_cells || 0;
     
     const priorityGaps = document.getElementById('priority-gaps');
-    if (priorityGaps) priorityGaps.textContent = gaps.statistics.priority_gaps || 0;
+    if (priorityGaps) priorityGaps.textContent = gapStats.priority_gaps || 0;
     
     const coveragePercentage = document.getElementById('coverage-percentage');
-    if (coveragePercentage) coveragePercentage.textContent = (gaps.statistics.coverage_percentage || 0) + '%';
+    if (coveragePercentage) coveragePercentage.textContent = (gapStats.coverage_percentage || 0) + '%';
     
     // Update recommendations
     updateGapRecommendations(gaps.recommendations || []);
@@ -513,43 +580,44 @@ function updateAlignmentAnalysis(alignment) {
     // Store alignment data for breakdown
     analysisData.alignment = alignment;
     
+    // Handle case where alignment might have different structure
+    const alignStats = alignment.statistics || {};
+    const alignedList = alignment.aligned || [];
+    const misalignedList = alignment.misaligned || [];
+    
     // Safely update elements with null checking
     const alignedPrograms = document.getElementById('aligned-programs');
-    if (alignedPrograms) alignedPrograms.textContent = alignment.statistics.aligned_count || 0;
+    if (alignedPrograms) alignedPrograms.textContent = alignStats.aligned_count || 0;
     
     const misalignedPrograms = document.getElementById('misaligned-programs');
-    if (misalignedPrograms) misalignedPrograms.textContent = alignment.statistics.misaligned_count || 0;
+    if (misalignedPrograms) misalignedPrograms.textContent = alignStats.misaligned_count || 0;
     
     const alignmentPercentage = document.getElementById('alignment-percentage');
-    if (alignmentPercentage) alignmentPercentage.textContent = (alignment.statistics.alignment_percentage || 0) + '%';
+    if (alignmentPercentage) alignmentPercentage.textContent = (alignStats.alignment_percentage || 0) + '%';
     
     const totalAnalyzedPrograms = document.getElementById('total-analyzed-programs');
-    if (totalAnalyzedPrograms) totalAnalyzedPrograms.textContent = alignment.statistics.total_programs || 0;
+    if (totalAnalyzedPrograms) totalAnalyzedPrograms.textContent = alignStats.total_programs || 0;
     
     const centerAlignmentPercentage = document.getElementById('center-alignment-percentage');
-    if (centerAlignmentPercentage) centerAlignmentPercentage.textContent = (alignment.statistics.alignment_percentage || 0) + '%';
+    if (centerAlignmentPercentage) centerAlignmentPercentage.textContent = (alignStats.alignment_percentage || 0) + '%';
     
     // Calculate alignment score (out of 100)
-    const alignmentScore = Math.round(alignment.statistics.alignment_percentage || 0);
+    const alignmentScore = Math.round(alignStats.alignment_percentage || 0);
     const alignmentScoreElement = document.getElementById('alignment-score');
     if (alignmentScoreElement) alignmentScoreElement.textContent = alignmentScore;
     
     // Update programs list
-    updateAlignmentProgramsList(alignment.aligned, alignment.misaligned);
+    updateAlignmentProgramsList(alignedList, misalignedList);
     
-    // Update breakdown data immediately if breakdown tab is active
-    const activeBreakdownTab = document.querySelector('.breakdown-tab.active');
-    if (activeBreakdownTab) {
-        const breakdownType = activeBreakdownTab.dataset.breakdown;
-        loadBreakdownData(breakdownType);
-    }
+    // Update breakdown data immediately - load default sector breakdown
+    loadBreakdownData('sector');
     
     // Update recommendations
     updateAlignmentRecommendations(alignment);
     
     // Update pie chart if Chart.js is available
     if (typeof Chart !== 'undefined') {
-        updateAlignmentChart(alignment.statistics);
+        updateAlignmentChart(alignStats);
     }
 }
 
@@ -1137,6 +1205,33 @@ function showNotification(message, type) {
     setTimeout(() => {
         notification.remove();
     }, 3000);
+}
+
+/**
+ * Show initial loading states for all tab content
+ */
+function showInitialLoadingStates() {
+    const loadingHTML = '<div class="loading-state"><i class="fas fa-spinner fa-spin"></i><p>Memuat data analisis...</p></div>';
+    
+    // Overlap tab loading state
+    const overlapItems = document.getElementById('overlap-items');
+    if (overlapItems) overlapItems.innerHTML = loadingHTML;
+    
+    // Gap recommendations loading state
+    const gapRecommendations = document.getElementById('gap-recommendations-list');
+    if (gapRecommendations) gapRecommendations.innerHTML = loadingHTML;
+    
+    // Alignment breakdown loading state
+    const alignmentBreakdown = document.getElementById('alignment-breakdown-content');
+    if (alignmentBreakdown) alignmentBreakdown.innerHTML = loadingHTML;
+    
+    // Programs list loading state
+    const programsList = document.getElementById('programs-list');
+    if (programsList) programsList.innerHTML = loadingHTML;
+    
+    // Alignment recommendations loading state
+    const alignmentRecommendations = document.getElementById('alignment-recommendations');
+    if (alignmentRecommendations) alignmentRecommendations.innerHTML = loadingHTML;
 }
 
 function formatCurrency(amount) {
