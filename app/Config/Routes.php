@@ -38,4 +38,11 @@ $routes->group('rpjmd', static function ($routes) {
     });
 });
 $routes->get('analisis', 'Analisis::index');
-$routes->get('monitoring', 'Monitoring::index');
+// Monitoring Routes
+$routes->group('monitoring', static function ($routes) {
+    $routes->get('', 'MonitoringNew::index');
+    $routes->get('getStatistics', 'MonitoringNew::getStatistics');
+    $routes->get('getProgramData', 'MonitoringNew::getProgramData');
+    $routes->get('getProgressChart', 'MonitoringNew::getProgressChart');
+    $routes->post('updateProgress/(:num)', 'MonitoringNew::updateProgress/$1');
+});

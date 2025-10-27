@@ -1,0 +1,174 @@
+/* Monitoring Dashboard Styles */
+
+/* Cards */
+.stats-card {
+    background: #fff;
+    padding: 1.5rem;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    margin-bottom: 1rem;
+    transition: transform 0.2s;
+}
+
+.stats-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+}
+
+.stats-card h5 {
+    color: #666;
+    font-size: 0.9rem;
+    margin-bottom: 0.5rem;
+}
+
+.stats-card h3 {
+    color: #333;
+    font-size: 1.8rem;
+    margin: 0;
+}
+
+/* Map Container */
+.map-container {
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    margin-bottom: 1.5rem;
+}
+
+#map {
+    height: 500px;
+    width: 100%;
+    border-radius: 8px;
+}
+
+/* Chart Containers */
+.chart-container {
+    background: #fff;
+    padding: 1.5rem;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    margin-bottom: 1.5rem;
+}
+
+.chart-container h5 {
+    color: #333;
+    margin-bottom: 1rem;
+    font-size: 1.1rem;
+}
+
+/* Progress Update Form */
+.progress-form {
+    max-width: 600px;
+    margin: 20px auto;
+    padding: 20px;
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.progress-photos {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 10px;
+    margin-top: 10px;
+}
+
+.progress-photo {
+    width: 100%;
+    height: 150px;
+    object-fit: cover;
+    border-radius: 4px;
+    border: 2px solid #eee;
+}
+
+/* Filters */
+.filter-controls {
+    background: #fff;
+    padding: 1rem;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    margin-bottom: 1.5rem;
+}
+
+.filter-group {
+    margin-bottom: 1rem;
+}
+
+.filter-group label {
+    display: block;
+    margin-bottom: 0.5rem;
+    color: #666;
+}
+
+/* Progress Indicators */
+.progress-indicator {
+    display: inline-block;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    margin-right: 8px;
+}
+
+.progress-low {
+    background-color: #dc3545;
+}
+
+.progress-medium {
+    background-color: #ffc107;
+}
+
+.progress-high {
+    background-color: #28a745;
+}
+
+/* Legend */
+.map-legend {
+    background: #fff;
+    padding: 10px;
+    border-radius: 4px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    position: absolute;
+    bottom: 20px;
+    right: 20px;
+    z-index: 1000;
+}
+
+.legend-item {
+    display: flex;
+    align-items: center;
+    margin: 5px 0;
+    font-size: 0.9rem;
+}
+
+/* Modal Customization */
+.modal-content {
+    border-radius: 8px;
+}
+
+.modal-header {
+    background: #f8f9fa;
+    border-radius: 8px 8px 0 0;
+}
+
+.modal-body {
+    padding: 1.5rem;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .stats-card {
+        margin-bottom: 1rem;
+    }
+    
+    #map {
+        height: 400px;
+    }
+    
+    .chart-container {
+        margin-bottom: 1rem;
+    }
+    
+    .progress-photos {
+        grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    }
+}

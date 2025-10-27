@@ -1,0 +1,74 @@
+/* Legend Styles */
+.legend {
+    background: white;
+    padding: 10px;
+    border-radius: 4px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+}
+
+.marker-legend {
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    display: inline-block;
+    margin-right: 8px;
+}
+
+/* Map Container */
+.map-container {
+    position: relative;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+#map {
+    height: 500px;
+    width: 100%;
+}
+
+/* Chart Containers */
+.chart-container {
+    background: white;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    margin-bottom: 20px;
+}
+
+.chart-container h5 {
+    margin-bottom: 15px;
+    color: #333;
+    font-size: 1rem;
+}
+
+/* Popup Styling */
+.program-popup {
+    padding: 5px;
+}
+
+.program-popup h6 {
+    margin-bottom: 10px;
+    color: #333;
+}
+
+.program-popup .progress {
+    height: 8px;
+    margin: 10px 0;
+}
+
+.program-popup .btn {
+    width: 100%;
+    margin-top: 10px;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    #map {
+        height: 400px;
+    }
+    
+    .chart-container {
+        margin-bottom: 15px;
+    }
+}

@@ -1,14 +1,16 @@
-# CodeIgniter 4 Silaras App - AI Agent Instructions
+# SiLaras App - AI Agent Instructions
 
-This is a **CodeIgniter 4** web application using the standard framework architecture with minimal customizations.
+This is a **CodeIgniter 4** web application for geospatial-based planning and monitoring of regional development programs in Banjarbaru City.
 
 ## Architecture Overview
 
-- **Framework**: CodeIgniter 4 (PHP 8.1+) - follows MVC pattern
-- **Entry Point**: `public/index.php` - web server should point to `public/` directory
-- **CLI Tool**: `./spark` - CodeIgniter's command-line interface for migrations, scaffolding, etc.
+- **Framework**: CodeIgniter 4 (PHP 8.1+) with MVC architecture
+- **Entry Point**: `public/index.php` - web server points to `public/` directory
+- **Key Features**: Geospatial analysis, program planning, real-time monitoring
+- **Database**: MySQL/MariaDB with GIS capabilities
+- **Frontend**: HTML5, CSS3, JavaScript (ES6+) with Leaflet.js for maps
+- **CLI Tool**: `./spark` - CodeIgniter's command-line interface for all operations
 - **Autoloading**: PSR-4 with `CodeIgniter\` namespace for system files
-- **Configuration**: All config files in `app/Config/` - modify these instead of system defaults
 
 ## Key Directory Structure
 
@@ -27,6 +29,25 @@ tests/             # PHPUnit tests
 vendor/            # Composer dependencies
 ```
 
+## Core Components
+
+### 1. Program Management Module
+- **Controller**: `app/Controllers/InputProgram.php`
+- **Model**: `app/Models/ProgramModel.php`
+- **Views**: `app/Views/input_program/`
+- Handles CRUD operations for development programs
+
+### 2. Geospatial Module (RPJMD)
+- **Controller**: `app/Controllers/RPJMD.php`
+- **Model**: `app/Models/RpjmdPriorityZoneModel.php`
+- Manages priority zones and spatial analysis
+- See `RPJMD_MODULE_DOCUMENTATION.md` for detailed schema
+
+### 3. Monitoring System
+- **Controller**: `app/Controllers/Monitoring.php`
+- Real-time tracking of program implementation
+- Integration with program evaluation metrics
+
 ## Development Patterns
 
 ### Controllers
@@ -35,9 +56,9 @@ vendor/            # Composer dependencies
 - Add shared helpers to `$helpers` array in BaseController
 
 ### Database Configuration
-- Edit `app/Config/Database.php` for database settings
+- Configure MySQL/MariaDB with GIS extensions in `app/Config/Database.php`
 - Testing uses SQLite in-memory database (`tests` connection group)
-- Environment automatically switches to `tests` group when `ENVIRONMENT === 'testing'`
+- Environment auto-switches to `tests` group when `ENVIRONMENT === 'testing'`
 
 ### Testing
 - Run tests: `composer test` or `./vendor/bin/phpunit` (Windows: `vendor\bin\phpunit`)
@@ -52,22 +73,37 @@ vendor/            # Composer dependencies
   - `./spark migrate` - run database migrations
   - `./spark db:seed SeedName` - run database seeder
 
-## Configuration Specifics
+## Project Conventions
 
-### Services (Dependency Injection)
-- Override framework services in `app/Config/Services.php`
-- Use `service('name')` function to access services
-- Services are singletons by default (`$getShared = true`)
+### Routes
+- Defined in `app/Config/Routes.php`
+- Group-based routing for modules:
+  - `/input-program/` - Program management
+  - `/peta-program/` - Map visualization
+  - `/rpjmd/` - Development planning
+- RESTful API endpoints under `/api` groups
 
-### Routing
-- All routes defined in `app/Config/Routes.php`
-- Default route: `$routes->get('/', 'Home::index')`
-- Use route groups for organization and middleware
+### Models
+- Extend `CodeIgniter\Model`
+- Use soft deletes (`deleted_at`)
+- GIS-related models include spatial data fields
 
-### Environment
-- Database connection automatically switches to `tests` group during testing
-- Base URL defaults to `http://localhost:8080/`
-- CSP disabled by default (`$CSPEnabled = false`)
+### Views
+- Located in `app/Views/<module_name>/`
+- Use partial views for reusable components
+- JavaScript modules in `public/assets/js/`
+
+## Integration Points
+
+### GIS Integration
+- Leaflet.js for map visualization
+- GeoJSON for spatial data exchange
+- Priority zone analysis using point-in-polygon
+
+### External Dependencies
+- OpenStreetMap/Satellite base layers
+- Font Awesome 6 for icons
+- Chart.js for analytics
 
 ## Performance Optimization
 - `preload.php` configured for OPcache preloading (production)
