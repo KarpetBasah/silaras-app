@@ -51,7 +51,7 @@ class ProgramModel extends Model
         'koordinat_lat' => 'required|decimal',
         'koordinat_lng' => 'required|decimal',
         'tahun_pelaksanaan' => 'required|exact_length[4]|is_natural_no_zero',
-        'anggaran_total' => 'required|is_natural_no_zero'
+        'anggaran_total' => 'required|numeric|greater_than[0]'
     ];
     protected $validationMessages   = [];
     protected $skipValidation       = false;
@@ -93,6 +93,9 @@ class ProgramModel extends Model
         if (!empty($filters['status'])) {
             $builder->where('program.status', $filters['status']);
         }
+
+        // Order by most recent first
+        $builder->orderBy('program.created_at', 'DESC');
 
         return $builder->findAll();
     }

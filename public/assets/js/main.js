@@ -98,8 +98,8 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
     
-    // Add loading state to buttons
-    document.querySelectorAll('button[type="submit"], .btn-submit').forEach(button => {
+    // Add loading state to buttons (except form submit buttons)
+    document.querySelectorAll('button[type="submit"]:not(.program-form button), .btn-submit:not(.program-form .btn-submit)').forEach(button => {
         button.addEventListener('click', function() {
             this.classList.add('loading');
             this.disabled = true;
@@ -116,21 +116,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
 function initProgramForm() {
     console.log('Initializing program form...');
-    
-    // Format currency input
-    const anggaranInput = document.getElementById('anggaran_total');
-    if (anggaranInput) {
-        console.log('Anggaran input found:', anggaranInput);
-        anggaranInput.addEventListener('input', function(e) {
-            let value = e.target.value.replace(/[^\d]/g, '');
-            if (value.length > 0) {
-                value = parseInt(value).toLocaleString('id-ID');
-            }
-            e.target.value = value;
-        });
-    } else {
-        console.log('Anggaran input not found');
-    }
     
     // Location validation
     const btnValidateLocation = document.getElementById('btn-validate-location');
@@ -149,26 +134,26 @@ function initProgramForm() {
     } else {
         console.log('Map picker button not found');
     }
-    if (btnMapPicker) {
-        btnMapPicker.addEventListener('click', openMapPicker);
-    }
     
     // File upload validation
     initFileUploadValidation();
     
-    // Form submission enhancement
+    // Form submission enhancement - remove auto-formatting conflict
     const programForm = document.querySelector('.program-form');
     if (programForm) {
         programForm.addEventListener('submit', function(e) {
-            const anggaranInput = document.getElementById('anggaran_total');
-            if (anggaranInput) {
-                anggaranInput.value = anggaranInput.value.replace(/[^\d]/g, '');
-            }
+            console.log('Form submitting...');
             
             const submitBtn = programForm.querySelector('button[type="submit"]');
             if (submitBtn) {
                 submitBtn.classList.add('loading');
                 submitBtn.disabled = true;
+                
+                // Re-enable button after 10 seconds as failsafe
+                setTimeout(() => {
+                    submitBtn.classList.remove('loading');
+                    submitBtn.disabled = false;
+                }, 10000);
             }
         });
     }

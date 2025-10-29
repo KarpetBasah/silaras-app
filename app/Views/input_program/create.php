@@ -65,13 +65,14 @@
                         
                         <div class="form-group">
                             <label for="anggaran_total">Anggaran (Rupiah) <span class="required">*</span></label>
-                            <input type="number" 
+                            <input type="text" 
                                    id="anggaran_total" 
                                    name="anggaran_total" 
                                    class="form-control" 
                                    value="<?= old('anggaran_total') ?>"
-                                   placeholder="0" 
-                                   min="1" 
+                                   placeholder="Masukkan nominal anggaran" 
+                                   pattern="[0-9,.]+"
+                                   title="Masukkan angka saja, gunakan koma atau titik untuk pemisah ribuan"
                                    required>
                         </div>
                     </div>

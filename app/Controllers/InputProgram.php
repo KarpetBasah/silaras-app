@@ -30,9 +30,9 @@ class InputProgram extends BaseController
 
     public function index()
     {
-        // Get recent programs for display
+        // Get recent programs for display (3 most recent)
         $recentPrograms = $this->programModel->getProgramsWithRelations();
-        $recentPrograms = array_slice($recentPrograms, 0, 5); // Limit to 5 recent
+        $recentPrograms = array_slice($recentPrograms, 0, 3); // Limit to 3 recent
         
         // Get stats
         $totalPrograms = $this->programModel->countAll();
@@ -76,7 +76,7 @@ class InputProgram extends BaseController
             'koordinat_lat' => 'required|decimal',
             'koordinat_lng' => 'required|decimal',
             'tahun_pelaksanaan' => 'required|integer|greater_than[2020]',
-            'anggaran_total' => 'required|integer|greater_than[0]',
+            'anggaran_total' => 'required|numeric|greater_than[0]',
             'sektor_id' => 'required|is_natural_no_zero',
             'rpjmd_sasaran_id' => 'required|is_natural_no_zero',
             'opd_id' => 'required|is_natural_no_zero',
@@ -96,6 +96,10 @@ class InputProgram extends BaseController
             // Generate kode program
             $kodeProgram = $this->generateKodeProgram();
             
+            // Clean and convert anggaran total
+            $anggaranInput = $this->request->getPost('anggaran_total');
+            $anggaranTotal = $this->cleanNumericInput($anggaranInput);
+            
             // Prepare program data
             $programData = [
                 'kode_program' => $kodeProgram,
@@ -108,7 +112,7 @@ class InputProgram extends BaseController
                 'koordinat_lat' => $this->request->getPost('koordinat_lat'),
                 'koordinat_lng' => $this->request->getPost('koordinat_lng'),
                 'tahun_pelaksanaan' => $this->request->getPost('tahun_pelaksanaan'),
-                'anggaran_total' => $this->request->getPost('anggaran_total'),
+                'anggaran_total' => $anggaranTotal,
                 'status' => 'perencanaan',
                 'progress_fisik' => 0.00,
                 'created_by' => 1 // TODO: Get from session when auth is implemented
@@ -287,5 +291,40 @@ class InputProgram extends BaseController
         $this->programDokumenModel->insert($dokumenData);
         
         return $dokumenData;
+    }
+
+    /**
+     * Clean numeric input by removing separators and converting to integer
+     */
+    private function cleanNumericInput($input)
+    {
+        // Remove all non-numeric characters except the last decimal point
+        // This handles both Indonesian format (123.456.789) and international format (123,456,789.50)
+        $cleaned = trim($input);
+        
+        // Remove spaces and common thousand separators
+        $cleaned = str_replace([' ', ','], '', $cleaned);
+        
+        // Handle dots - if it's Indonesian format (xxx.xxx.xxx), treat all dots as thousand separators
+        // If it's decimal format (xxx.xx), treat the last dot as decimal
+        $dotCount = substr_count($cleaned, '.');
+        
+        if ($dotCount > 1) {
+            // Multiple dots = Indonesian thousand separator format
+            $cleaned = str_replace('.', '', $cleaned);
+        } elseif ($dotCount == 1) {
+            // Single dot - check if it's decimal (2 digits after) or thousand separator
+            $dotPos = strrpos($cleaned, '.');
+            $afterDot = substr($cleaned, $dotPos + 1);
+            
+            if (strlen($afterDot) > 2) {
+                // More than 2 digits after dot = thousand separator
+                $cleaned = str_replace('.', '', $cleaned);
+            }
+            // If 1-2 digits after dot, treat as decimal but convert to int anyway
+        }
+        
+        // Convert to integer
+        return (int) floatval($cleaned);
     }
 }
