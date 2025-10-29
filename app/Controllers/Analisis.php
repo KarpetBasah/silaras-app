@@ -187,4 +187,27 @@ class Analisis extends BaseController
             return [2024, 2023, 2022, 2021, 2020];
         }
     }
+
+    /**
+     * API endpoint untuk mendapatkan zona prioritas RPJMD
+     */
+    public function getRpjmdZones()
+    {
+        try {
+            $zones = $this->rpjmdPriorityZoneModel->getForLeaflet(true);
+            
+            return $this->response->setJSON([
+                'success' => true,
+                'data' => $zones,
+                'count' => count($zones),
+                'message' => 'Zona RPJMD berhasil dimuat'
+            ]);
+        } catch (\Exception $e) {
+            log_message('error', 'Error getting RPJMD zones: ' . $e->getMessage());
+            return $this->response->setStatusCode(500)->setJSON([
+                'success' => false,
+                'message' => 'Gagal memuat zona RPJMD: ' . $e->getMessage()
+            ]);
+        }
+    }
 }

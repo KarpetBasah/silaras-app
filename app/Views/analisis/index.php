@@ -1558,6 +1558,112 @@ input:checked + .slider:before {
         font-size: 0.65rem;
     }
 }
+
+/* RPJMD Zone Styling */
+.rpjmd-zone-popup {
+    min-width: 250px;
+}
+
+.rpjmd-zone-popup h4 {
+    margin: 0 0 1rem 0;
+    color: var(--primary-color);
+    font-size: 1.1rem;
+}
+
+.zone-details p {
+    margin: 0.5rem 0;
+    font-size: 0.9rem;
+}
+
+.priority-badge {
+    padding: 0.2rem 0.6rem;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.priority-badge.priority-tinggi {
+    background: #dc2626;
+    color: white;
+}
+
+.priority-badge.priority-sedang {
+    background: #f59e0b;
+    color: white;
+}
+
+.priority-badge.priority-rendah {
+    background: #10b981;
+    color: white;
+}
+
+.zone-alignment-info {
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--border-color);
+}
+
+.zone-alignment-info h5 {
+    margin: 0 0 0.5rem 0;
+    font-size: 0.9rem;
+    color: var(--text-dark);
+}
+
+.zone-program-stats {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.zone-program-stats span {
+    padding: 0.2rem 0.5rem;
+    border-radius: 6px;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+.aligned-count {
+    background: var(--success-color);
+    color: white;
+}
+
+.misaligned-count {
+    background: var(--warning-color);
+    color: white;
+}
+
+.total-count {
+    background: var(--accent-color);
+    color: white;
+}
+
+.rpjmd-tooltip {
+    background: rgba(0, 0, 0, 0.8);
+    color: white;
+    border: none;
+    border-radius: 4px;
+    font-size: 0.8rem;
+    padding: 0.25rem 0.5rem;
+}
+
+/* Map Zone Styling */
+.leaflet-container .rpjmd-zone {
+    transition: all 0.3s ease;
+}
+
+.leaflet-container .rpjmd-zone:hover {
+    fill-opacity: 0.5 !important;
+    stroke-width: 3 !important;
+}
+
+.leaflet-container .rpjmd-zone.strategic {
+    stroke-dasharray: none;
+}
+
+.leaflet-container .rpjmd-zone.thematic {
+    stroke-dasharray: 5, 5;
+}
 </style>
 
 <!-- Analysis JavaScript -->

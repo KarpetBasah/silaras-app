@@ -27,6 +27,9 @@ function initAnalysisPage() {
     // Show initial loading states
     showInitialLoadingStates();
     
+    // Load RPJMD zones first (independent of analysis data)
+    loadRpjmdZones();
+    
     // Load initial data
     loadAnalysisData();
 }
@@ -91,9 +94,12 @@ function initMapLayerControls() {
     });
     
     showRpjmd.addEventListener('change', function() {
+        console.log('RPJMD toggle clicked:', this.checked);
         if (this.checked) {
+            console.log('Adding RPJMD layer to map');
             analysisMap.addLayer(rpjmdLayer);
         } else {
+            console.log('Removing RPJMD layer from map');
             analysisMap.removeLayer(rpjmdLayer);
         }
     });
@@ -1058,8 +1064,130 @@ function updateGapMap(gaps) {
  * Update alignment markers on map
  */
 function updateAlignmentMap(alignment) {
-    // This would show RPJMD zones and program alignment status
-    // Implementation depends on RPJMD zone data structure
+    // Clear existing RPJMD layer
+    rpjmdLayer.clearLayers();
+    
+    // Load RPJMD zones
+    loadRpjmdZones(alignment);
+}
+
+/**
+ * Load RPJMD zones and display on map
+ */
+function loadRpjmdZones(alignment = null) {
+    fetch('/analisis/api/rpjmd-zones')
+        .then(response => response.json())
+        .then(data => {
+            if (data.success && data.data) {
+                displayRpjmdZones(data.data, alignment);
+            } else {
+                console.warn('No RPJMD zones data available');
+            }
+        })
+        .catch(error => {
+            console.warn('Failed to load RPJMD zones:', error);
+        });
+}
+
+/**
+ * Display RPJMD zones on map
+ */
+function displayRpjmdZones(zones, alignment = null) {
+    rpjmdLayer.clearLayers();
+    console.log('Displaying RPJMD zones:', zones.length);
+    
+    zones.forEach(zone => {
+        if (!zone.coordinates) {
+            console.warn('Zone without coordinates:', zone.name);
+            return;
+        }
+        
+        const color = zone.color || getPriorityZoneColor(zone.priority);
+        const fillOpacity = zone.type === 'strategic' ? 0.3 : 0.2;
+        
+        // Create polygon for zone
+        const polygon = L.polygon(zone.coordinates, {
+            color: color,
+            weight: 2,
+            opacity: 0.8,
+            fillColor: color,
+            fillOpacity: fillOpacity,
+            className: `rpjmd-zone ${zone.type} priority-${zone.priority?.toLowerCase() || 'sedang'}`
+        });
+        
+        // Create popup content
+        const popupContent = createRpjmdZonePopup(zone, alignment);
+        polygon.bindPopup(popupContent);
+        
+        // Add tooltip
+        polygon.bindTooltip(`${zone.name} (${zone.priority || 'Sedang'})`, {
+            permanent: false,
+            direction: 'center',
+            className: 'rpjmd-tooltip'
+        });
+        
+        rpjmdLayer.addLayer(polygon);
+    });
+    
+    console.log(`Loaded ${zones.length} RPJMD zones on map, layer has ${rpjmdLayer.getLayers().length} features`);
+}
+
+/**
+ * Create popup content for RPJMD zone
+ */
+function createRpjmdZonePopup(zone, alignment = null) {
+    let alignmentInfo = '';
+    
+    if (alignment) {
+        // Count programs in this zone
+        const alignedInZone = alignment.aligned.filter(p => 
+            p.alignment_info && p.alignment_info.priority_zone === zone.name
+        ).length;
+        
+        const misalignedInZone = alignment.misaligned.filter(p => 
+            p.alignment_info && p.alignment_info.priority_zone === zone.name
+        ).length;
+        
+        const totalInZone = alignedInZone + misalignedInZone;
+        
+        if (totalInZone > 0) {
+            alignmentInfo = `
+                <div class="zone-alignment-info">
+                    <h5>Program dalam Zona:</h5>
+                    <div class="zone-program-stats">
+                        <span class="aligned-count">${alignedInZone} Selaras</span>
+                        <span class="misaligned-count">${misalignedInZone} Tidak Selaras</span>
+                        <span class="total-count">Total: ${totalInZone}</span>
+                    </div>
+                </div>
+            `;
+        }
+    }
+    
+    return `
+        <div class="rpjmd-zone-popup">
+            <h4>${zone.name}</h4>
+            <div class="zone-details">
+                <p><strong>Tipe:</strong> ${zone.type === 'strategic' ? 'Strategis' : 'Tematik'}</p>
+                <p><strong>Prioritas:</strong> <span class="priority-badge priority-${zone.priority?.toLowerCase() || 'sedang'}">${zone.priority || 'Sedang'}</span></p>
+                ${zone.theme ? `<p><strong>Tema:</strong> ${zone.theme}</p>` : ''}
+                ${zone.description ? `<p><strong>Deskripsi:</strong> ${zone.description}</p>` : ''}
+            </div>
+            ${alignmentInfo}
+        </div>
+    `;
+}
+
+/**
+ * Get color for priority zone
+ */
+function getPriorityZoneColor(priority) {
+    const colors = {
+        'Tinggi': '#dc2626',   // Red
+        'Sedang': '#f59e0b',   // Orange  
+        'Rendah': '#10b981'    // Green
+    };
+    return colors[priority] || '#6b7280'; // Default gray
 }
 
 /**

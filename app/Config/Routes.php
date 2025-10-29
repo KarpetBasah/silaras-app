@@ -45,6 +45,7 @@ $routes->group('analisis', static function ($routes) {
         $routes->get('kesenjangan', 'Analisis::getKesenjangan');
         $routes->get('keselarasan-rpjmd', 'Analisis::getKeselarasanRPJMD');
         $routes->get('statistik', 'Analisis::getStatistikAnalisis');
+        $routes->get('rpjmd-zones', 'Analisis::getRpjmdZones');
     });
 });
 
