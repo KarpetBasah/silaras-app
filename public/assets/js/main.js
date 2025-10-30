@@ -476,6 +476,13 @@ function initFileUploadValidation() {
             const inputName = e.target.name.replace('[]', '');
             const maxSize = maxSizes[inputName];
             
+            // Check maximum number of files for foto_lokasi
+            if (inputName === 'foto_lokasi' && files.length > 5) {
+                showNotificationMessage('Maksimal 5 foto dapat diupload', 'error');
+                e.target.value = '';
+                return;
+            }
+            
             for (let file of files) {
                 if (maxSize && file.size > maxSize) {
                     showNotificationMessage(`File ${file.name} terlalu besar. Maksimal ${Math.round(maxSize / 1024 / 1024)}MB`, 'error');

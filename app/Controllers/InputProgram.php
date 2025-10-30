@@ -81,12 +81,17 @@ class InputProgram extends BaseController
             'rpjmd_sasaran_id' => 'required|is_natural_no_zero',
             'opd_id' => 'required|is_natural_no_zero',
             'rab_file' => 'permit_empty|uploaded[rab_file]|max_size[rab_file,5120]|ext_in[rab_file,pdf,doc,docx,xls,xlsx]',
-            'ded_file' => 'permit_empty|uploaded[ded_file]|max_size[ded_file,10240]|ext_in[ded_file,pdf,dwg,dxf]',
-            'foto_lokasi' => 'permit_empty|uploaded[foto_lokasi]|max_size[foto_lokasi,2048]|ext_in[foto_lokasi,jpg,jpeg,png,gif]'
+            'ded_file' => 'permit_empty|uploaded[ded_file]|max_size[ded_file,10240]|ext_in[ded_file,pdf,dwg,dxf]'
         ]);
         
         if (!$validation) {
             return redirect()->back()->withInput()->with('errors', $this->validator->getErrors());
+        }
+
+        // Custom validation for foto_lokasi (multiple files)
+        $fotoValidationErrors = $this->validateFotoLokasi();
+        if (!empty($fotoValidationErrors)) {
+            return redirect()->back()->withInput()->with('errors', $fotoValidationErrors);
         }
 
         $db = \Config\Database::connect();
@@ -326,5 +331,51 @@ class InputProgram extends BaseController
         
         // Convert to integer
         return (int) floatval($cleaned);
+    }
+
+    /**
+     * Validate multiple foto_lokasi files
+     */
+    private function validateFotoLokasi(): array
+    {
+        $errors = [];
+        $files = $this->request->getFiles();
+        
+        // Check if foto_lokasi exists and has files
+        if (!isset($files['foto_lokasi']) || empty($files['foto_lokasi'])) {
+            return $errors; // No files uploaded, that's allowed
+        }
+        
+        $fotoFiles = $files['foto_lokasi'];
+        
+        // If it's a single file, convert to array for uniform handling
+        if (!is_array($fotoFiles)) {
+            $fotoFiles = [$fotoFiles];
+        }
+        
+        // Check maximum number of files (5)
+        if (count($fotoFiles) > 5) {
+            $errors['foto_lokasi'] = 'Maksimal 5 file foto lokasi yang dapat diunggah.';
+            return $errors;
+        }
+        
+        // Validate each file
+        foreach ($fotoFiles as $index => $file) {
+            if ($file && $file->isValid() && !$file->hasMoved()) {
+                // Check file size (2MB = 2048KB)
+                if ($file->getSize() > 2048 * 1024) {
+                    $errors["foto_lokasi_{$index}"] = "File foto lokasi " . ($index + 1) . " terlalu besar. Maksimal 2MB.";
+                }
+                
+                // Check file extension
+                $allowedExtensions = ['jpg', 'jpeg', 'png', 'gif'];
+                $extension = strtolower($file->getExtension());
+                if (!in_array($extension, $allowedExtensions)) {
+                    $errors["foto_lokasi_{$index}"] = "File foto lokasi " . ($index + 1) . " harus berformat: " . implode(', ', $allowedExtensions);
+                }
+            }
+        }
+        
+        return $errors;
     }
 }
