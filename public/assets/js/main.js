@@ -355,10 +355,10 @@ function addMapPickerControls() {
                     });
                 }, function(error) {
                     console.error('Geolocation error:', error);
-                    alert('Tidak dapat mengakses lokasi Anda. Pastikan GPS aktif dan berikan izin lokasi.');
+                    showNotificationMessage('Tidak dapat mengakses lokasi Anda. Pastikan GPS aktif dan berikan izin lokasi.', 'error');
                 });
             } else {
-                alert('Browser Anda tidak mendukung geolocation.');
+                showNotificationMessage('Browser Anda tidak mendukung geolocation.', 'error');
             }
         };
         
@@ -394,7 +394,7 @@ function confirmLocationSelection() {
             validateLocation();
         }, 500);
     } else {
-        alert('Silakan pilih lokasi di peta terlebih dahulu');
+        showNotificationMessage('Silakan pilih lokasi di peta terlebih dahulu', 'error');
     }
 }
 
@@ -478,7 +478,7 @@ function initFileUploadValidation() {
             
             for (let file of files) {
                 if (maxSize && file.size > maxSize) {
-                    alert(`File ${file.name} terlalu besar. Maksimal ${Math.round(maxSize / 1024 / 1024)}MB`);
+                    showNotificationMessage(`File ${file.name} terlalu besar. Maksimal ${Math.round(maxSize / 1024 / 1024)}MB`, 'error');
                     e.target.value = '';
                     return;
                 }
@@ -497,19 +497,164 @@ function showFileInfo(input, files) {
         infoDiv = document.createElement('div');
         infoDiv.className = 'file-info';
         infoDiv.style.marginTop = '0.5rem';
-        infoDiv.style.fontSize = '0.85rem';
-        infoDiv.style.color = '#10b981';
         container.appendChild(infoDiv);
     }
     
     if (files.length > 0) {
-        const fileNames = Array.from(files).map(file => 
-            `${file.name} (${(file.size / 1024).toFixed(1)}KB)`
-        ).join(', ');
-        infoDiv.innerHTML = `<i class="fas fa-check-circle"></i> ${fileNames}`;
+        // Create file preview list
+        let fileListHTML = '<div class="file-preview-list">';
+        
+        Array.from(files).forEach((file, index) => {
+            const fileSize = (file.size / 1024).toFixed(1);
+            const fileIcon = getFileIcon(file.name);
+            
+            fileListHTML += `
+                <div class="file-preview-item" data-file-index="${index}">
+                    <div class="file-info-content">
+                        <i class="fas fa-${fileIcon}"></i>
+                        <span class="file-name">${file.name}</span>
+                        <span class="file-size">(${fileSize}KB)</span>
+                    </div>
+                    <button type="button" class="btn-remove-file" onclick="removeAttachment('${input.id}', ${index})" title="Hapus file">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            `;
+        });
+        
+        fileListHTML += '</div>';
+        infoDiv.innerHTML = fileListHTML;
     } else {
         infoDiv.innerHTML = '';
     }
+}
+
+function getFileIcon(fileName) {
+    const extension = fileName.toLowerCase().split('.').pop();
+    const iconMap = {
+        'pdf': 'file-pdf',
+        'doc': 'file-word',
+        'docx': 'file-word',
+        'xls': 'file-excel',
+        'xlsx': 'file-excel',
+        'dwg': 'file-image',
+        'dxf': 'file-image',
+        'jpg': 'file-image',
+        'jpeg': 'file-image',
+        'png': 'file-image',
+        'gif': 'file-image'
+    };
+    
+    return iconMap[extension] || 'file';
+}
+
+function removeAttachment(inputId, fileIndex) {
+    const input = document.getElementById(inputId);
+    if (!input) return;
+    
+    // For multiple files input, we need to recreate the FileList without the removed file
+    if (input.multiple) {
+        const dt = new DataTransfer();
+        const files = Array.from(input.files);
+        
+        files.forEach((file, index) => {
+            if (index !== fileIndex) {
+                dt.items.add(file);
+            }
+        });
+        
+        input.files = dt.files;
+    } else {
+        // For single file input, just clear it
+        input.value = '';
+    }
+    
+    // Update the file info display
+    showFileInfo(input, input.files);
+    
+    // Show confirmation message
+    const removedFileName = input.multiple ? 'File' : 'File';
+    showNotificationMessage(`${removedFileName} berhasil dihapus`, 'success');
+}
+
+function showNotificationMessage(message, type = 'info') {
+    // Create notification element
+    const notification = document.createElement('div');
+    notification.className = `notification-toast notification-${type}`;
+    notification.innerHTML = `
+        <i class="fas fa-${type === 'success' ? 'check-circle' : type === 'error' ? 'exclamation-circle' : 'info-circle'}"></i>
+        <span>${message}</span>
+    `;
+    
+    // Determine border and icon color based on type
+    let borderColor, iconColor;
+    switch(type) {
+        case 'success':
+            borderColor = 'var(--success-color)';
+            iconColor = 'var(--success-color)';
+            break;
+        case 'error':
+            borderColor = 'var(--error-color)';
+            iconColor = 'var(--error-color)';
+            break;
+        case 'warning':
+            borderColor = 'var(--warning-color)';
+            iconColor = 'var(--warning-color)';
+            break;
+        default:
+            borderColor = 'var(--primary-color)';
+            iconColor = 'var(--primary-color)';
+    }
+    
+    // Style the notification using CSS variables
+    notification.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: var(--white);
+        border: 2px solid ${borderColor};
+        color: var(--text-dark);
+        padding: 12px 16px;
+        border-radius: 8px;
+        box-shadow: var(--shadow-lg);
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        z-index: 9999;
+        opacity: 0;
+        transform: translateX(100%);
+        transition: all 0.3s ease;
+        font-size: 14px;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        max-width: 300px;
+        min-width: 200px;
+    `;
+    
+    // Style the icon with appropriate color
+    const icon = notification.querySelector('i');
+    if (icon) {
+        icon.style.color = iconColor;
+        icon.style.fontSize = '16px';
+    }
+    
+    document.body.appendChild(notification);
+    
+    // Show notification
+    setTimeout(() => {
+        notification.style.opacity = '1';
+        notification.style.transform = 'translateX(0)';
+    }, 100);
+    
+    // Hide notification after 3 seconds
+    setTimeout(() => {
+        notification.style.opacity = '0';
+        notification.style.transform = 'translateX(100%)';
+        setTimeout(() => {
+            if (notification.parentNode) {
+                notification.remove();
+            }
+        }, 300);
+    }, 3000);
 }
 
 function autoHideAlerts() {

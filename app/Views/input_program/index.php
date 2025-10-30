@@ -68,7 +68,7 @@
                                 <span class="program-meta">
                                     <?= esc($program['opd_singkat']) ?> • 
                                     <?= $program['tahun_pelaksanaan'] ?> • 
-                                    Rp <?= number_format($program['anggaran_total'] / 1000000, 1) ?>M
+                                    <?= format_anggaran($program['anggaran_total']) ?>
                                 </span>
                             </div>
                             <span class="status-badge status-<?= $program['status'] ?>">
