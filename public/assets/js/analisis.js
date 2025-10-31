@@ -1322,8 +1322,8 @@ function showNotification(message, type) {
         top: 20px;
         right: 20px;
         padding: 12px 20px;
-        background: ${type === 'success' ? '#10b981' : '#dc2626'};
-        color: white;
+        background: ${type === 'success' ? '#ffffff' : '#dc2626'};
+        color: black;
         border-radius: 6px;
         z-index: 10000;
     `;
