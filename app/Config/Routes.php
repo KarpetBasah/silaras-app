@@ -50,7 +50,15 @@ $routes->group('analisis', static function ($routes) {
 });
 
 // Monitoring Routes
-$routes->get('monitoring', 'Monitoring::index');
+$routes->group('monitoring', static function ($routes) {
+    $routes->get('', 'Monitoring::index');
+    $routes->get('map', 'Monitoring::map');
+    $routes->get('input-progress/(:num)', 'Monitoring::inputProgress/$1');
+    $routes->post('saveProgress', 'Monitoring::saveProgress');
+    $routes->get('getMapData', 'Monitoring::getMapData');
+    $routes->get('getStatistics', 'Monitoring::getStatistics');
+    $routes->get('getPrograms', 'Monitoring::getPrograms');
+});
 
 // Test Routes (remove in production)
 $routes->get('test-analisis/methods', 'TestAnalisis::testMethods');
