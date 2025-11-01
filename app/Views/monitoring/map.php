@@ -802,54 +802,89 @@ function getStatusIcon(status) {
 
 // Create custom marker
 function createProgressMarker(data) {
-    const progressColor = getProgressColor(data.progress_fisik);
-    const statusIcon = getStatusIcon(data.status_lapangan);
-    
-    const markerHtml = `
-        <div class="progress-marker" style="background-color: ${progressColor}">
-            <div class="marker-icon">
-                <i class="${data.sektor_icon}"></i>
+    try {
+        const progressColor = getProgressColor(data.progress_fisik || 0);
+        const statusIcon = getStatusIcon(data.status_lapangan || 'normal');
+        
+        const markerHtml = `
+            <div class="progress-marker" style="background-color: ${progressColor}">
+                <div class="marker-icon">
+                    <i class="${data.sektor_icon || 'fas fa-circle'}"></i>
+                </div>
+                <div class="marker-progress">${Math.round(data.progress_fisik || 0)}%</div>
+                <div class="marker-status">
+                    <i class="fas ${statusIcon}"></i>
+                </div>
             </div>
-            <div class="marker-progress">${Math.round(data.progress_fisik)}%</div>
-            <div class="marker-status">
-                <i class="fas ${statusIcon}"></i>
-            </div>
-        </div>
-    `;
-    
-    const icon = L.divIcon({
-        html: markerHtml,
-        className: 'custom-progress-marker',
-        iconSize: [60, 60],
-        iconAnchor: [30, 30]
-    });
-    
-    const marker = L.marker([data.program_lat, data.program_lng], { icon })
-        .bindPopup(createPopupContent(data))
-        .on('click', () => showProgramInfo(data));
-    
-    return marker;
+        `;
+        
+        const icon = L.divIcon({
+            html: markerHtml,
+            className: 'custom-progress-marker',
+            iconSize: [60, 60],
+            iconAnchor: [30, 30]
+        });
+        
+        const lat = parseFloat(data.program_lat);
+        const lng = parseFloat(data.program_lng);
+        
+        if (isNaN(lat) || isNaN(lng)) {
+            console.error('Invalid coordinates:', data.program_lat, data.program_lng);
+            return null;
+        }
+        
+        const marker = L.marker([lat, lng], { icon })
+            .bindPopup(createPopupContent(data))
+            .on('click', () => showProgramInfo(data));
+        
+        return marker;
+    } catch (error) {
+        console.error('Error creating marker:', error, data);
+        return null;
+    }
 }
 
 // Create popup content
 function createPopupContent(data) {
+    const formatDate = (dateStr) => {
+        try {
+            return new Date(dateStr).toLocaleDateString('id-ID');
+        } catch {
+            return 'N/A';
+        }
+    };
+    
+    const formatCurrency = (amount) => {
+        try {
+            return new Intl.NumberFormat('id-ID', {
+                style: 'currency',
+                currency: 'IDR',
+                minimumFractionDigits: 0
+            }).format(amount || 0);
+        } catch {
+            return 'Rp 0';
+        }
+    };
+    
     return `
         <div class="marker-popup">
-            <h4>${data.nama_kegiatan}</h4>
+            <h4>${data.nama_kegiatan || 'Program Tidak Dikenal'}</h4>
             <div class="popup-info">
-                <p><strong>Kode:</strong> ${data.kode_program}</p>
-                <p><strong>OPD:</strong> ${data.opd_nama}</p>
-                <p><strong>Sektor:</strong> ${data.nama_sektor}</p>
-                <p><strong>Progress Fisik:</strong> ${data.progress_fisik}%</p>
-                <p><strong>Progress Keuangan:</strong> ${data.progress_keuangan}%</p>
-                <p><strong>Status:</strong> ${data.status_lapangan}</p>
-                <p><strong>Monitoring Terakhir:</strong> ${new Date(data.tanggal_monitoring).toLocaleDateString('id-ID')}</p>
+                <p><strong>Kode:</strong> ${data.kode_program || 'N/A'}</p>
+                <p><strong>OPD:</strong> ${data.opd_nama || 'N/A'}</p>
+                <p><strong>Sektor:</strong> ${data.nama_sektor || 'N/A'}</p>
+                <p><strong>Progress Fisik:</strong> ${Math.round(data.progress_fisik || 0)}%</p>
+                <p><strong>Progress Keuangan:</strong> ${Math.round(data.progress_keuangan || 0)}%</p>
+                <p><strong>Status:</strong> ${data.status_lapangan || 'Normal'}</p>
+                <p><strong>Monitoring Terakhir:</strong> ${formatDate(data.tanggal_monitoring)}</p>
+                <p><strong>Anggaran:</strong> ${formatCurrency(data.anggaran_total)}</p>
             </div>
             <div class="popup-actions">
-                <button onclick="showProgramInfo(${JSON.stringify(data).replace(/"/g, '&quot;')})" class="btn btn-sm btn-primary">
+                <button onclick="showProgramInfoFromData(this)" class="btn btn-sm btn-primary" 
+                        data-program='${JSON.stringify(data)}'>
                     Detail
                 </button>
-                <button onclick="inputProgress(${data.program_id})" class="btn btn-sm btn-success">
+                <button onclick="inputProgress(${data.program_id || 0})" class="btn btn-sm btn-success">
                     Update Progress
                 </button>
             </div>
@@ -864,22 +899,51 @@ async function loadMapData() {
     
     try {
         const params = new URLSearchParams({
-            sektor: document.getElementById('filter-sektor').value,
-            opd: document.getElementById('filter-opd').value,
-            tahun: document.getElementById('filter-tahun').value,
-            status_lapangan: document.getElementById('filter-status').value
+            sektor: document.getElementById('filter-sektor')?.value || '',
+            opd: document.getElementById('filter-opd')?.value || '',
+            tahun: document.getElementById('filter-tahun')?.value || '',
+            status_lapangan: document.getElementById('filter-status')?.value || ''
         });
         
-        const response = await fetch(`/monitoring/getMapData?${params}`);
-        const result = await response.json();
+        console.log('Loading map data with params:', params.toString());
         
-        if (result.success) {
+        const response = await fetch(`<?= base_url('monitoring/getMapData') ?>?${params}`, {
+            method: 'GET',
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                'Accept': 'application/json',
+                'Content-Type': 'application/json'
+            }
+        });
+        
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const contentType = response.headers.get('content-type');
+        if (!contentType || !contentType.includes('application/json')) {
+            const text = await response.text();
+            console.error('Non-JSON response:', text);
+            throw new Error('Response is not JSON');
+        }
+        
+        const result = await response.json();
+        console.log('Map data response:', result);
+        console.log('Filters applied:', result.filters_applied);
+        console.log('Data count received:', result.count);
+        
+        // Show filter notification
+        showFilterNotification(result.filters_applied, result.count);
+        
+        if (result.success && result.data) {
             updateMapMarkers(result.data);
         } else {
-            console.error('Error loading map data:', result.message);
+            console.error('API returned error:', result.message || 'Unknown error');
+            updateMapMarkers([]); // Show empty map
         }
     } catch (error) {
         console.error('Error loading map data:', error);
+        updateMapMarkers([]); // Show empty map on error
     } finally {
         loading.style.display = 'none';
     }
@@ -888,37 +952,96 @@ async function loadMapData() {
 // Update map markers
 function updateMapMarkers(data) {
     // Clear existing markers
-    markersLayer.clearLayers();
+    if (markersLayer) {
+        markersLayer.clearLayers();
+    }
     currentMarkers = [];
+    
+    // Ensure data is array
+    if (!Array.isArray(data)) {
+        console.warn('Data is not an array:', data);
+        return;
+    }
     
     // Add new markers
     data.forEach(item => {
-        if (item.program_lat && item.program_lng) {
-            const marker = createProgressMarker(item);
-            markersLayer.addLayer(marker);
-            currentMarkers.push({ marker, data: item });
+        try {
+            if (item.program_lat && item.program_lng && 
+                !isNaN(parseFloat(item.program_lat)) && 
+                !isNaN(parseFloat(item.program_lng))) {
+                const marker = createProgressMarker(item);
+                if (markersLayer && marker) {
+                    markersLayer.addLayer(marker);
+                    currentMarkers.push({ marker, data: item });
+                }
+            } else {
+                console.warn('Invalid coordinates for item:', item);
+            }
+        } catch (error) {
+            console.error('Error creating marker for item:', item, error);
         }
     });
     
     // Fit map to markers if data exists
     if (currentMarkers.length > 0) {
-        const group = new L.featureGroup(currentMarkers.map(m => m.marker));
-        monitoringMap.fitBounds(group.getBounds().pad(0.1));
+        try {
+            const group = new L.featureGroup(currentMarkers.map(m => m.marker));
+            monitoringMap.fitBounds(group.getBounds().pad(0.1));
+        } catch (error) {
+            console.error('Error fitting bounds:', error);
+        }
+    } else {
+        console.log('No valid markers to display');
+    }
+}
+
+// Show program info from data attribute
+function showProgramInfoFromData(button) {
+    try {
+        const data = JSON.parse(button.getAttribute('data-program'));
+        showProgramInfo(data);
+    } catch (error) {
+        console.error('Error parsing program data:', error);
     }
 }
 
 // Show program info in panel
 function showProgramInfo(data) {
+    if (!data) {
+        console.error('No data provided to showProgramInfo');
+        return;
+    }
+    
     const panel = document.getElementById('info-panel');
     const content = document.getElementById('info-content');
     
+    const formatDate = (dateStr) => {
+        try {
+            return new Date(dateStr).toLocaleDateString('id-ID');
+        } catch {
+            return 'N/A';
+        }
+    };
+    
+    const formatCurrency = (amount) => {
+        try {
+            return new Intl.NumberFormat('id-ID', {
+                style: 'currency',
+                currency: 'IDR',
+                minimumFractionDigits: 0
+            }).format(amount || 0);
+        } catch {
+            return 'Rp 0';
+        }
+    };
+    
     content.innerHTML = `
         <div class="program-info">
-            <div class="program-title">${data.nama_kegiatan}</div>
+            <div class="program-title">${data.nama_kegiatan || 'Program Tidak Dikenal'}</div>
             <div class="program-meta">
-                <span><strong>Kode Program:</strong> ${data.kode_program}</span>
-                <span><strong>OPD:</strong> ${data.opd_nama}</span>
-                <span><strong>Sektor:</strong> ${data.nama_sektor}</span>
+                <span><strong>Kode Program:</strong> ${data.kode_program || 'N/A'}</span>
+                <span><strong>OPD:</strong> ${data.opd_nama || 'N/A'}</span>
+                <span><strong>Sektor:</strong> ${data.nama_sektor || 'N/A'}</span>
                 <span><strong>Tahun:</strong> ${data.tahun_pelaksanaan || 'N/A'}</span>
             </div>
         </div>
@@ -927,15 +1050,15 @@ function showProgramInfo(data) {
             <h4>Progress Terkini</h4>
             <div class="progress-item">
                 <span class="progress-label">Progress Fisik</span>
-                <span class="progress-value" style="color: ${getProgressColor(data.progress_fisik)}">${data.progress_fisik}%</span>
+                <span class="progress-value" style="color: ${getProgressColor(data.progress_fisik || 0)}">${Math.round(data.progress_fisik || 0)}%</span>
             </div>
             <div class="progress-item">
                 <span class="progress-label">Progress Keuangan</span>
-                <span class="progress-value" style="color: ${getProgressColor(data.progress_keuangan)}">${data.progress_keuangan}%</span>
+                <span class="progress-value" style="color: ${getProgressColor(data.progress_keuangan || 0)}">${Math.round(data.progress_keuangan || 0)}%</span>
             </div>
             <div class="progress-item">
                 <span class="progress-label">Realisasi Anggaran</span>
-                <span class="progress-value">Rp ${new Intl.NumberFormat('id-ID').format(data.anggaran_realisasi)}</span>
+                <span class="progress-value">${formatCurrency(data.anggaran_realisasi)}</span>
             </div>
         </div>
         
@@ -943,11 +1066,11 @@ function showProgramInfo(data) {
             <h4>Info Monitoring Terakhir</h4>
             <div class="info-item">
                 <span class="info-label">Tanggal Monitoring:</span>
-                <span class="info-value">${new Date(data.tanggal_monitoring).toLocaleDateString('id-ID')}</span>
+                <span class="info-value">${formatDate(data.tanggal_monitoring)}</span>
             </div>
             <div class="info-item">
                 <span class="info-label">Status Lapangan:</span>
-                <span class="info-value">${data.status_lapangan}</span>
+                <span class="info-value">${data.status_lapangan || 'Normal'}</span>
             </div>
             <div class="info-item">
                 <span class="info-label">Petugas Monitoring:</span>
@@ -961,7 +1084,7 @@ function showProgramInfo(data) {
             ` : ''}
             
             <div class="action-buttons">
-                <button onclick="inputProgress(${data.program_id})" class="btn btn-success btn-sm">
+                <button onclick="inputProgress(${data.program_id || 0})" class="btn btn-success btn-sm">
                     <i class="fas fa-edit"></i> Update Progress
                 </button>
                 <button onclick="closeInfoPanel()" class="btn btn-secondary btn-sm">
@@ -993,6 +1116,57 @@ function toggleLegend() {
     }
 }
 
+// Show filter notification
+function showFilterNotification(filters, count) {
+    const filtersCount = Object.keys(filters || {}).length;
+    let message = `Menampilkan ${count} program`;
+    
+    if (filtersCount > 0) {
+        const filterNames = [];
+        if (filters.sektor_id) filterNames.push('Sektor');
+        if (filters.opd_id) filterNames.push('OPD');
+        if (filters.tahun) filterNames.push('Tahun');
+        if (filters.status_lapangan) filterNames.push('Status');
+        
+        message += ` (difilter berdasarkan: ${filterNames.join(', ')})`;
+    }
+    
+    // Create or update notification
+    let notification = document.getElementById('filter-notification');
+    if (!notification) {
+        notification = document.createElement('div');
+        notification.id = 'filter-notification';
+        notification.style.cssText = `
+            position: fixed;
+            top: 80px;
+            right: 20px;
+            background: #007bff;
+            color: white;
+            padding: 10px 15px;
+            border-radius: 5px;
+            font-size: 14px;
+            z-index: 1000;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+            transition: all 0.3s ease;
+        `;
+        document.body.appendChild(notification);
+    }
+    
+    notification.textContent = message;
+    notification.style.display = 'block';
+    
+    // Auto hide after 3 seconds
+    setTimeout(() => {
+        if (notification) {
+            notification.style.opacity = '0';
+            setTimeout(() => {
+                notification.style.display = 'none';
+                notification.style.opacity = '1';
+            }, 300);
+        }
+    }, 3000);
+}
+
 // Filter map
 function filterMap() {
     loadMapData();
@@ -1015,6 +1189,18 @@ function inputProgress(programId) {
 // Initialize when page loads
 document.addEventListener('DOMContentLoaded', function() {
     initMap();
+    
+    // Add event listeners for automatic filtering
+    const filterElements = ['filter-tahun', 'filter-sektor', 'filter-status', 'filter-opd'];
+    filterElements.forEach(id => {
+        const element = document.getElementById(id);
+        if (element) {
+            element.addEventListener('change', function() {
+                console.log(`Filter ${id} changed to:`, this.value);
+                loadMapData(); // Auto-reload when filter changes
+            });
+        }
+    });
 });
 
 // Add custom CSS for markers

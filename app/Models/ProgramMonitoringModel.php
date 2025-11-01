@@ -68,23 +68,39 @@ class ProgramMonitoringModel extends Model
     /**
      * Get latest monitoring data for each program
      */
-    public function getLatestMonitoringByProgram()
+    public function getLatestMonitoringByProgram($filters = [])
     {
-        return $this->select('program_monitoring.*, 
-                             program.nama_kegiatan, program.kode_program, program.anggaran_total,
-                             program.koordinat_lat as program_lat, program.koordinat_lng as program_lng,
-                             opd.nama_singkat as opd_nama, sektor.nama_sektor, sektor.color as sektor_color,
-                             sektor.icon as sektor_icon')
-                   ->join('program', 'program.id = program_monitoring.program_id')
-                   ->join('opd', 'opd.id = program.opd_id')
-                   ->join('sektor', 'sektor.id = program.sektor_id')
-                   ->join('(SELECT program_id, MAX(tanggal_monitoring) as latest_date 
-                            FROM program_monitoring 
-                            GROUP BY program_id) latest', 
-                           'latest.program_id = program_monitoring.program_id AND 
-                            latest.latest_date = program_monitoring.tanggal_monitoring', 'inner')
-                   ->orderBy('program_monitoring.tanggal_monitoring', 'DESC')
-                   ->findAll();
+        $builder = $this->select('program_monitoring.*, 
+                                 program.nama_kegiatan, program.kode_program, program.anggaran_total,
+                                 program.koordinat_lat as program_lat, program.koordinat_lng as program_lng,
+                                 program.tahun_pelaksanaan,
+                                 opd.nama_singkat as opd_nama, sektor.nama_sektor, sektor.color as sektor_color,
+                                 sektor.icon as sektor_icon')
+                       ->join('program', 'program.id = program_monitoring.program_id')
+                       ->join('opd', 'opd.id = program.opd_id')
+                       ->join('sektor', 'sektor.id = program.sektor_id')
+                       ->join('(SELECT program_id, MAX(tanggal_monitoring) as latest_date 
+                                FROM program_monitoring 
+                                GROUP BY program_id) latest', 
+                               'latest.program_id = program_monitoring.program_id AND 
+                                latest.latest_date = program_monitoring.tanggal_monitoring', 'inner');
+
+        // Apply filters
+        if (!empty($filters['sektor_id'])) {
+            $builder->where('program.sektor_id', $filters['sektor_id']);
+        }
+        if (!empty($filters['opd_id'])) {
+            $builder->where('program.opd_id', $filters['opd_id']);
+        }
+        if (!empty($filters['tahun'])) {
+            $builder->where('program.tahun_pelaksanaan', $filters['tahun']);
+        }
+        if (!empty($filters['status_lapangan'])) {
+            $builder->where('program_monitoring.status_lapangan', $filters['status_lapangan']);
+        }
+
+        return $builder->orderBy('program_monitoring.tanggal_monitoring', 'DESC')
+                       ->findAll();
     }
 
     /**

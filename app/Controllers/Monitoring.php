@@ -180,23 +180,68 @@ class Monitoring extends BaseController
      */
     public function getMapData()
     {
-        if (!$this->request->isAJAX()) {
-            return $this->response->setStatusCode(403);
+        // Allow both AJAX and direct requests for debugging
+        $this->response->setContentType('application/json');
+
+        try {
+            $filters = [
+                'sektor_id' => $this->request->getGet('sektor'),
+                'opd_id' => $this->request->getGet('opd'),
+                'tahun' => $this->request->getGet('tahun'),
+                'status_lapangan' => $this->request->getGet('status_lapangan')
+            ];
+
+            // Remove empty filters
+            $filters = array_filter($filters, function($value) {
+                return $value !== null && $value !== '';
+            });
+
+            // Debug: log filters
+            log_message('info', 'Monitoring filters applied: ' . json_encode($filters));
+
+            $monitoringData = $this->monitoringModel->getLatestMonitoringByProgram($filters);
+            
+            // Ensure data is properly formatted
+            $formattedData = [];
+            foreach ($monitoringData as $item) {
+                $formattedData[] = [
+                    'id' => $item['id'] ?? null,
+                    'program_id' => $item['program_id'] ?? null,
+                    'nama_kegiatan' => $item['nama_kegiatan'] ?? 'N/A',
+                    'kode_program' => $item['kode_program'] ?? 'N/A',
+                    'opd_nama' => $item['opd_nama'] ?? 'N/A',
+                    'nama_sektor' => $item['nama_sektor'] ?? 'N/A',
+                    'sektor_color' => $item['sektor_color'] ?? '#666666',
+                    'sektor_icon' => $item['sektor_icon'] ?? 'fas fa-circle',
+                    'program_lat' => floatval($item['program_lat'] ?? 0),
+                    'program_lng' => floatval($item['program_lng'] ?? 0),
+                    'progress_fisik' => floatval($item['progress_fisik'] ?? 0),
+                    'progress_keuangan' => floatval($item['progress_keuangan'] ?? 0),
+                    'anggaran_realisasi' => floatval($item['anggaran_realisasi'] ?? 0),
+                    'anggaran_total' => floatval($item['anggaran_total'] ?? 0),
+                    'status_lapangan' => $item['status_lapangan'] ?? 'normal',
+                    'tanggal_monitoring' => $item['tanggal_monitoring'] ?? date('Y-m-d'),
+                    'kendala' => $item['kendala'] ?? '',
+                    'solusi' => $item['solusi'] ?? '',
+                    'rekomendasi' => $item['rekomendasi'] ?? '',
+                    'tahun_pelaksanaan' => $item['tahun_pelaksanaan'] ?? null
+                ];
+            }
+            
+            return $this->response->setJSON([
+                'success' => true,
+                'data' => $formattedData,
+                'count' => count($formattedData),
+                'filters_applied' => $filters // Debug info
+            ]);
+        } catch (\Exception $e) {
+            log_message('error', 'Error in getMapData: ' . $e->getMessage());
+            return $this->response->setJSON([
+                'success' => false,
+                'message' => 'Error loading map data: ' . $e->getMessage(),
+                'data' => []
+            ]);
         }
-
-        $filters = [
-            'sektor_id' => $this->request->getGet('sektor'),
-            'opd_id' => $this->request->getGet('opd'),
-            'tahun' => $this->request->getGet('tahun'),
-            'status_lapangan' => $this->request->getGet('status_lapangan')
-        ];
-
-        $monitoringData = $this->monitoringModel->getLatestMonitoringByProgram();
-        
-        return $this->response->setJSON([
-            'success' => true,
-            'data' => $monitoringData
-        ]);
     }
 
     /**
